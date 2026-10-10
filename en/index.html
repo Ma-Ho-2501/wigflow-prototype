@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WigFlow Prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* Layout: PC = left mock (tabs + description above it) / right feedback card. Narrow or phone = full-width mock + fixed bottom feedback button that opens a sheet. */
+
+  --page-bg:#150f1f;
+  --page-ink:#f4eef8;
+  --page-ink-soft:#b9a7c7;
+  --page-line:rgba(255,255,255,.14);
+
+  --accent:#c23f74;
+  --accent-soft:#fbe4ec;
+  --yellow:#d99a0b;
+  --yellow-line:#f2c230;
+
+  --bg:#f6f1f7;
+  --surface:#ffffff;
+  --surface-soft:#f1e8ef;
+  --ink:#241a2e;
+  --ink-soft:#6f6678;
+  --line:#e5dbe6;
+
+  --gold:#a8762a;
+  --gold-soft:#f7ecd6;
+  --green:#3f7d5c;
+  --green-soft:#e1efe7;
+  --danger:#b1453b;
+  --danger-soft:#f6e0dd;
+
+  --font-display:"Fraunces",serif;
+  --font-body:"Inter","Helvetica Neue",Arial,sans-serif;
+
+  --shadow:0 24px 50px -24px rgba(10,6,16,.6);
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html.lock{overflow:hidden}
+body{
+  background:var(--page-bg);
+  color:var(--page-ink);
+  font-family:var(--font-body);
+  padding:28px 16px 44px;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:break-word;
+}
+.nb{display:inline-block;white-space:nowrap}
+
+.page{max-width:1120px;margin:0 auto}
+
+.proto-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.proto-badges span{
+  font-size:12px;font-weight:700;letter-spacing:.03em;color:#fff;
+  border-radius:999px;padding:6px 14px;
+  background:var(--yellow);white-space:nowrap;
+}
+.masthead p+p{margin-top:14px}
+.masthead p.lead{font-weight:700;color:var(--page-ink)}
+.masthead p.small{font-size:12px;line-height:1.9}
+.hl{background:var(--yellow-line);color:var(--page-bg);font-weight:700;padding:3px 8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.footnote-gap{display:block;height:.9em}
+
+.masthead{margin-bottom:8px}
+.masthead h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(28px,6vw,38px);margin:4px 0 10px;color:var(--page-ink);
+}
+.masthead p{color:var(--page-ink-soft);font-size:14px;line-height:1.8;max-width:640px;margin:0}
+
+/* ---------- main layout ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:40px;align-items:start;margin-top:8px}
+.mock-col{min-width:0;display:flex;flex-direction:column;align-items:center}
+.mock-wrap{width:min(100%,360px)}
+.feedback-col{min-width:0;position:sticky;top:20px}
+
+.tabbar{display:flex;gap:6px;margin:20px 0 14px}
+.tabbar button{
+  flex:1 1 0;min-width:0;white-space:nowrap;
+  font-family:inherit;font-size:13px;font-weight:700;
+  padding:10px 8px;border-radius:999px;border:1px solid var(--page-line);
+  background:rgba(255,255,255,.04);color:var(--page-ink-soft);cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.tabbar button[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.caption{
+  font-size:13px;line-height:1.8;color:var(--page-ink-soft);
+  background:rgba(255,255,255,.05);border:1px solid var(--page-line);border-radius:16px;
+  padding:14px 18px;margin-bottom:16px;
+}
+.caption strong{display:block;color:var(--page-ink);font-size:14px;margin-bottom:4px;font-family:var(--font-display)}
+
+.phone{
+  position:relative;width:100%;
+  background:#120d1a;border:1px solid rgba(255,255,255,.08);
+  border-radius:38px;padding:14px;box-shadow:var(--shadow);
+}
+.screen{
+  background:var(--bg);border-radius:26px;height:700px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.screen[hidden]{display:none}
+.statusbar{height:18px}
+
+.appbar{
+  padding:10px 16px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);background:var(--surface);
+}
+.appbar h2{font-size:15px;margin:0;font-weight:700;color:var(--ink)}
+.appbar .icon-btn{
+  width:28px;height:28px;border-radius:50%;background:var(--surface-soft);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink-soft);
+  border:none;font-family:inherit;cursor:pointer;padding:0;
+}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);
+  background:var(--ink);color:#fff;font-size:12px;font-weight:700;
+  padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;max-width:88%;text-align:center;z-index:80;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- Screen 1: board ---------- */
+.board-scroll{flex:1;overflow-y:auto;padding:12px 10px 20px}
+.col{margin-bottom:16px}
+.col-head{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 8px}
+.col-head span.name{font-size:12px;font-weight:700;color:var(--ink-soft)}
+.col-head span.count{font-size:11px;background:var(--surface-soft);color:var(--ink-soft);border-radius:999px;padding:1px 7px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin:0 4px 8px;position:relative;cursor:pointer;
+}
+.card .row1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card .client{font-weight:700;font-size:13px;color:var(--ink)}
+.card .char{font-size:12px;color:var(--ink-soft);margin-top:1px}
+.card .meta{margin-top:8px}
+.card .dates{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:11px;color:var(--ink-soft)}
+.card .dates .warn{color:var(--danger);font-weight:700}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.chip.quote{background:var(--surface-soft);color:var(--ink-soft)}
+.chip.wait{background:var(--gold-soft);color:var(--gold)}
+.chip.active{background:var(--accent-soft);color:var(--accent)}
+.chip.done{background:var(--green-soft);color:var(--green)}
+.card .next{font-size:11px;color:var(--accent);margin-top:6px;font-weight:600}
+.badge{
+  position:absolute;top:-6px;right:-4px;background:var(--danger);color:#fff;
+  font-size:10px;font-weight:700;border-radius:999px;min-width:16px;height:16px;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+}
+
+/* ---------- Screen 2: detail ---------- */
+.detail-scroll{flex:1;overflow-y:auto;padding:14px 16px 24px}
+.detail-head{margin-bottom:12px}
+.detail-head .name{font-size:17px;font-weight:700;font-family:var(--font-display);color:var(--ink)}
+.detail-head .sub{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--ink-soft);margin-top:4px}
+.status-pill{
+  display:inline-flex;margin-top:8px;font-size:12px;font-weight:700;
+  background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;
+}
+.status-pill.deposit_wait{background:var(--gold-soft);color:var(--gold)}
+.status-pill.shipped{background:var(--green-soft);color:var(--green)}
+
+.stepper{display:flex;align-items:flex-start;margin:4px 2px 2px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto}
+.step .dot{
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:var(--surface-soft);color:var(--ink-soft);
+}
+.step.current .dot{background:var(--accent);color:#fff}
+.step.done .dot{background:var(--accent-soft);color:var(--accent)}
+.step .label{font-size:10px;color:var(--ink-soft);white-space:nowrap}
+.step.current .label{color:var(--ink);font-weight:700}
+.step-line{flex:1 1 auto;height:2px;background:var(--line);margin:10px 2px 0}
+.step-line.done{background:var(--accent)}
+.stepper-note{font-size:10px;color:var(--ink-soft);margin:6px 2px 14px;text-align:center}
+
+.sec{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.sec.current{border-left-color:var(--accent)}
+.sec h3{font-size:12px;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;font-weight:700}
+.refs{display:flex;gap:8px;flex-wrap:wrap}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12px;margin:0}
+.spec-grid dt{color:var(--ink-soft)}
+.spec-grid dd{margin:0;font-weight:600;color:var(--ink)}
+.quote-line{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+.quote-line:last-of-type{border-bottom:none}
+.quote-total{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink)}
+.quote-compact-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--ink)}
+.quote-compact-sub{font-size:11px;color:var(--ink-soft);margin-top:3px}
+.share-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);padding:6px 0;cursor:pointer}
+.toggle{width:30px;height:18px;border-radius:999px;background:var(--accent);position:relative;flex-shrink:0;transition:background .15s}
+.toggle::after{content:"";position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;right:2px;transition:right .15s,left .15s}
+.toggle.off{background:var(--line)}
+.toggle.off::after{right:auto;left:2px}
+.note{font-size:11px;color:var(--ink-soft);background:var(--surface-soft);border-radius:10px;padding:8px 10px;margin-top:8px;line-height:1.6}
+.banner{border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;margin-top:8px}
+.banner.good{background:var(--green-soft);color:var(--green)}
+.btn{
+  display:block;width:100%;text-align:center;font-weight:700;font-size:13px;white-space:nowrap;
+  border-radius:12px;padding:11px 10px;margin-top:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:inherit;cursor:pointer;
+}
+.sec .btn:first-of-type{margin-top:4px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+[data-action]{cursor:pointer}
+
+/* image attachment areas (never shown as real photos) */
+.attach{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:1.5px dashed #c9b8cc;border-radius:12px;background:var(--bg);color:var(--ink-soft);
+  text-align:center;padding:8px;font-size:10px;line-height:1.4;
+}
+.attach svg{width:20px;height:20px;flex-shrink:0}
+.attach b{font-size:11px;color:var(--ink);font-weight:700}
+.attach.thumb{width:64px;height:64px;flex-shrink:0}
+.attach.tile{flex:1 1 0;min-width:0;aspect-ratio:1/1}
+.attach.add{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.attach.big{width:100%;aspect-ratio:4/3;max-width:100%;font-size:12px;padding:12px;margin-bottom:12px}
+.attach.big svg{width:30px;height:30px}
+.attach.big b{font-size:13px}
+.tiles{display:flex;gap:8px}
+
+/* ---------- Screen 3: customer page ---------- */
+.client-scroll{flex:1;overflow-y:auto;padding:16px 16px 24px}
+.client-status{text-align:center;padding:18px 10px;background:var(--accent-soft);border-radius:16px;margin-bottom:12px}
+.client-status .label{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.04em}
+.client-status .headline{font-family:var(--font-display);font-size:16px;line-height:1.6;margin-top:6px;font-weight:600;color:var(--ink)}
+.client-status .sub-note{font-size:11px;color:var(--ink-soft);margin-top:6px}
+.action-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.action-row .btn{margin-top:0}
+.info-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.info-card .k{font-size:11px;color:var(--ink-soft)}
+.info-card .v{font-size:14px;font-weight:700;margin-top:2px;color:var(--ink)}
+.date-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.date-pair .info-card{margin-bottom:10px}
+
+.cap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.cap h4{font-size:12px;margin:0 0 8px;color:var(--ink);font-weight:700}
+.cap-row{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--ink)}
+.cap-row:first-of-type{border-top:none;padding-top:0}
+.cap-row .tag{font-size:10px;font-weight:700;border-radius:999px;padding:2px 8px;height:fit-content;text-align:center;white-space:nowrap}
+.cap-row .tag.see{background:var(--surface-soft);color:var(--ink-soft)}
+.cap-row .tag.act{background:var(--accent-soft);color:var(--accent)}
+.cap-row ul{margin:0;padding-left:14px}
+.inquiry textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px;
+  font-family:inherit;font-size:12px;min-height:72px;background:var(--bg);color:var(--ink);resize:vertical;
+}
+.inquiry .btn{margin-top:8px}
+.policy-link{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);
+  padding:10px 0;border-top:1px solid var(--line);margin-top:6px;
+}
+
+/* ---------- feedback survey ---------- */
+.survey{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:24px 22px;max-height:calc(100vh - 40px);overflow-y:auto}
+.survey-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.survey-head h2{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1.5;margin:0 0 6px;color:var(--ink)}
+.survey-head p{font-size:13px;color:var(--ink-soft);line-height:1.7;margin:0 0 20px}
+.sheet-x{display:none;width:32px;height:32px;border-radius:50%;border:none;background:var(--surface-soft);color:var(--ink-soft);font-size:16px;font-family:inherit;cursor:pointer;flex-shrink:0}
+fieldset.field{border:0;padding:0;margin:0 0 18px;min-width:0}
+fieldset.field legend{padding:0;margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ink)}
+.field{margin-bottom:18px}
+.field .field-label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink)}
+.radio-group{display:flex;flex-direction:column;gap:2px}
+.radio-group label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-weight:400;padding:4px 0}
+.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);resize:vertical;min-height:70px;
+}
+.survey-actions{display:flex;gap:10px}
+.survey-actions .btn{margin-top:0;width:auto;flex:1 1 0}
+.survey-close{display:none}
+.thanks{background:var(--green-soft);color:var(--green);border-radius:18px;padding:20px 22px;font-size:13px;font-weight:600;line-height:1.7}
+.thanks .btn{display:none;margin-top:14px}
+
+.fb-bar,.fb-backdrop{display:none}
+[hidden]{display:none!important}
+
+/* new deal form */
+.nf-field{margin-bottom:14px}
+.nf-field label{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.nf-field label small{font-weight:400;color:var(--ink-soft)}
+.nf-field input,.nf-field select{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:14px;background:var(--surface);color:var(--ink);
+}
+.nf-h{font-size:12px;letter-spacing:.04em;color:var(--accent);margin:18px 0 10px;font-weight:700;padding-top:12px;border-top:1px solid var(--line)}
+.nf-h:first-of-type{border-top:none;padding-top:0;margin-top:4px}
+.nf-h small{font-weight:400;color:var(--ink-soft)}
+.nf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.nf-grid .nf-field{margin-bottom:0}
+.nf-total{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15px;color:var(--ink);background:var(--accent-soft);border-radius:12px;padding:10px 14px;margin-bottom:8px}
+button.attach{font-family:inherit;cursor:pointer}
+.attach.on{border-style:solid;border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.attach.on b{color:var(--green)}
+.nf-lead{font-size:12px;color:var(--ink-soft);line-height:1.7;margin:0 0 14px}
+.form-actions{display:flex;gap:8px;margin-top:6px}
+.form-actions .btn{margin-top:0;flex:1 1 0}
+@keyframes pop{0%{box-shadow:0 0 0 0 rgba(194,63,116,.6)}100%{box-shadow:0 0 0 10px rgba(194,63,116,0)}}
+.card.just-added{border-color:var(--accent);animation:pop 1.2s ease-out 2}
+
+footer.notes{
+  margin-top:28px;font-size:12px;color:var(--page-ink-soft);line-height:1.8;
+  border-top:1px solid var(--page-line);padding-top:16px;max-width:620px;
+}
+
+/* ---------- narrow PC and phones: mobile layout ---------- */
+@media (max-width:920px){
+  body{padding:20px 0 96px}
+  .page{max-width:none}
+  .proto-badges,.masthead,.tabbar,.caption,footer.notes{margin-left:16px;margin-right:16px}
+  .layout{display:block}
+  .mock-col{display:block}
+  .mock-wrap{width:100%}
+  .tabbar{gap:5px;margin-top:16px}
+  .tabbar button{font-size:11px;padding:8px 4px;letter-spacing:0}
+  .caption{margin-bottom:12px;padding:12px 14px}
+
+  .phone{border:0;border-radius:0;padding:0;box-shadow:none;background:transparent}
+  .statusbar{display:none}
+  .screen{height:auto;min-height:calc(100vh - 260px);border-radius:0;overflow:visible}
+  .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+  .board-scroll,.detail-scroll,.client-scroll{overflow:visible}
+  .btn{font-size:12px;padding:9px 8px}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+
+  .feedback-col{position:static}
+  .fb-bar{
+    display:block;position:fixed;left:0;right:0;bottom:0;z-index:40;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--page-bg);border-top:1px solid var(--page-line);
+  }
+  .fb-bar button{
+    display:block;width:100%;margin:0;border-radius:999px;padding:13px 10px;font-size:14px;
+    border:0;background:var(--accent);color:#fff;font-weight:700;font-family:inherit;white-space:nowrap;cursor:pointer;
+  }
+  .fb-backdrop{display:block;position:fixed;inset:0;z-index:50;background:rgba(10,6,16,.6);opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+  .fb-backdrop.open{opacity:1;visibility:visible;transition:opacity .2s}
+  .survey{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;max-height:88vh;max-height:88dvh;
+    border-radius:22px 22px 0 0;padding:20px 16px 0;
+    transform:translateY(100%);visibility:hidden;
+    transition:transform .25s ease,visibility 0s .25s;
+  }
+  .survey.open{transform:translateY(0);visibility:visible;transition:transform .25s ease}
+  .sheet-x{display:block}
+  .survey-actions{
+    position:sticky;bottom:0;background:var(--surface);
+    padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);margin-top:4px;
+  }
+  .survey-close{display:block}
+  .thanks .btn{display:block}
+  .survey .thanks{margin-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+  .survey,.fb-backdrop,.toast{transition:none!important}
+}
+</style>
+
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+@media (max-width:920px){.nf-field input,.nf-field select{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="proto-badges">
+    <span>No account needed for feedback</span>
+    <span>No data is stored</span>
+  </div>
+
+  <div class="masthead">
+    <h1>WigFlow Prototype</h1>
+    <p class="lead">From references and specs to quotes, progress updates, final approval, and shipping.</p>
+    <p>A tool for commission-based wig makers to manage every order — from intake to delivery — in one place, instead of scattered across spreadsheets, DMs, and one-off forms.</p>
+    <p>By sharing specs, pricing, and progress directly with clients, it aims to cut down on miscommunication and missed approvals, so makers can focus on the work with peace of mind.</p>
+    <p>Try both the maker's order dashboard and the client-facing status page — fully interactive.</p>
+    <p><span class="hl">Spend 1–2 minutes clicking around, then a 30-second feedback form at the end.</span></p>
+    <p class="small">*All client names, character names, and amounts shown are fictional demo data.<br>*This is not an app available on the App Store — it's an interactive prototype of a concept still in development.</p>
+  </div>
+
+  <div class="layout">
+    <div class="mock-col">
+      <div class="mock-wrap">
+        <div class="tabbar" role="tablist">
+          <button role="tab" aria-selected="true" data-target="board">① Order Board</button>
+          <button role="tab" aria-selected="false" data-target="detail">② Order Detail</button>
+          <button role="tab" aria-selected="false" data-target="client">③ Client Page</button>
+        </div>
+
+        <div class="caption" id="caption-box"></div>
+
+        <div class="phone">
+          <div class="statusbar"></div>
+
+          <div class="screen" id="screen-board">
+            <div class="appbar">
+              <h2>Order Board</h2>
+              <button class="icon-btn" id="add-btn" type="button" aria-label="Add a new order">＋</button>
+            </div>
+            <div class="board-scroll" id="board-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-detail" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="detail-back" type="button" aria-label="Back to order board">‹</button>
+              <h2>Order Detail</h2>
+              <div class="icon-btn" style="opacity:.35">⋯</div>
+            </div>
+            <div class="detail-scroll" id="detail-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-client" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="client-back" type="button" aria-label="Back to order board">‹</button>
+              <h2>Order Status</h2>
+              <div class="icon-btn" style="opacity:.35">？</div>
+            </div>
+            <div class="client-scroll" id="client-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-new" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="new-back" type="button" aria-label="Cancel and go back to the board">‹</button>
+              <h2>New Order</h2>
+              <div class="icon-btn" style="opacity:0" aria-hidden="true">⋯</div>
+            </div>
+            <form class="detail-scroll" id="new-form">
+              <p class="nf-lead">Fill in the fields used for the order card, specs, and quote. Saving adds it to the board (it stays until you reload the page).</p>
+              <h3 class="nf-h">Basic Info</h3>
+              <div class="nf-field">
+                <label for="nf-character">Order name</label>
+                <input id="nf-character" type="text" required maxlength="40" placeholder="e.g. Mira Duskwater (original character)">
+              </div>
+              <div class="nf-field">
+                <label for="nf-client">Client name</label>
+                <input id="nf-client" type="text" required maxlength="30" placeholder="e.g. Alex Rivera">
+              </div>
+              <div class="nf-field">
+                <label for="nf-wear">Wear date</label>
+                <input id="nf-wear" type="date" required>
+              </div>
+              <div class="nf-field">
+                <label for="nf-delivery">Delivery date <small>(optional)</small></label>
+                <input id="nf-delivery" type="date">
+              </div>
+              <div class="nf-field">
+                <label for="nf-status">Status</label>
+                <select id="nf-status"></select>
+              </div>
+
+              <h3 class="nf-h">Wig Specs <small>(optional)</small></h3>
+              <div class="nf-grid" id="nf-specs"></div>
+              <div class="note" style="margin:0 0 16px">In the full product, spec fields like brand and color would be customizable. In this prototype, you can only fill in the fields provided.</div>
+
+              <h3 class="nf-h">Quote <small>(optional)</small></h3>
+              <div class="nf-grid" id="nf-costs"></div>
+              <div class="nf-total"><span>Total (auto-calculated)</span><span id="nf-total">$0</span></div>
+              <div class="note" style="margin:0 0 16px">Enter amounts and the total updates automatically. In the full product, line items like materials and shipping would be customizable.</div>
+
+              <h3 class="nf-h">Reference Photos <small>(dummy)</small></h3>
+              <div class="tiles" id="nf-photos"></div>
+              <div class="note" style="margin:8px 0 16px">Tap to mark as attached (tap again to undo). No real images are stored in this prototype.</div>
+
+              <div class="form-actions">
+                <button class="btn" id="new-cancel" type="button">Cancel</button>
+                <button class="btn primary" type="submit">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="feedback-col">
+      <section class="survey" id="survey" aria-label="Feedback">
+        <div class="survey-top">
+          <div class="survey-head">
+            <h2>Could this work for managing your real commissions?</h2>
+            <p>Tell us what you thought after trying the prototype. (About 30 seconds)</p>
+          </div>
+          <button class="sheet-x" type="button" id="sheet-x" aria-label="Close">✕</button>
+        </div>
+
+        <form id="survey-form">
+          <fieldset class="field">
+            <legend>Q1. Would this tool be more convenient than how you manage orders now?</legend>
+            <div class="radio-group">
+              <label><input type="radio" name="q1" value="Much more convenient" required> Much more convenient</label>
+              <label><input type="radio" name="q1" value="Somewhat more convenient" required> Somewhat more convenient</label>
+              <label><input type="radio" name="q1" value="About the same" required> About the same</label>
+              <label><input type="radio" name="q1" value="Less convenient than now" required> Less convenient than now</label>
+              <label><input type="radio" name="q1" value="Can't tell yet" required> Can't tell yet</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field" id="q2-group">
+            <legend>Q2. Which features seemed especially useful? (select all that apply)</legend>
+            <div class="radio-group">
+              <label><input type="checkbox" name="q2" value="Keeping all order info organized per commission"> Keeping all order info organized per commission</label>
+              <label><input type="checkbox" name="q2" value="Organizing reference images and wig specs"> Organizing reference images and wig specs</label>
+              <label><input type="checkbox" name="q2" value="Managing quotes and pricing"> Managing quotes and pricing</label>
+              <label><input type="checkbox" name="q2" value="Sharing progress updates with clients"> Sharing progress updates with clients</label>
+              <label><input type="checkbox" name="q2" value="Final review and revision requests"> Final review and revision requests</label>
+              <label><input type="checkbox" name="q2" value="Tracking shipping status"> Tracking shipping status</label>
+              <label><input type="checkbox" name="q2" value="None in particular"> None in particular</label>
+              <label><input type="checkbox" name="q2" value="Other"> Other</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Q3. Would you want to use a tool like this for real commissions?</legend>
+            <div class="radio-group">
+              <label><input type="radio" name="q3" value="Yes, definitely" required> Yes, definitely</label>
+              <label><input type="radio" name="q3" value="Yes, if the conditions are right" required> Yes, if the conditions are right</label>
+              <label><input type="radio" name="q3" value="Not sure" required> Not sure</label>
+              <label><input type="radio" name="q3" value="Probably not" required> Probably not</label>
+              <label><input type="radio" name="q3" value="No" required> No</label>
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <label for="q4" class="field-label">Q4. What's the most frustrating or stressful part of managing orders right now? (optional)</label>
+            <textarea id="q4" name="q4" placeholder="e.g. quotes and photos get buried in DMs, miscommunication about specs, replying to progress check-ins"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="q5" class="field-label">Q5. If you used this for real, what's missing or what concerns you? (optional)</label>
+            <textarea id="q5" name="q5" placeholder="e.g. too many fields to fill in, hard to use on mobile, unsure if clients would actually open the page"></textarea>
+          </div>
+
+          <div class="survey-actions">
+            <button type="button" class="btn survey-close" id="survey-close">Close</button>
+            <button type="submit" class="btn primary" id="survey-submit">Submit</button>
+          </div>
+        </form>
+        <div class="thanks" id="survey-thanks" hidden>
+          Thank you for your feedback!
+          <button type="button" class="btn" id="thanks-close">Close</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+</div>
+
+<div class="fb-bar"><button type="button" id="fb-open" aria-haspopup="dialog" aria-expanded="false" aria-controls="survey">Give Feedback</button></div>
+<div class="fb-backdrop" id="fb-backdrop"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+
+  var STATUS_ORDER = ['quote','deposit_wait','in_progress','confirm_wait','shipped'];
+  var statusLabel = {
+    quote:'Drafting Quote', deposit_wait:'Awaiting Deposit', in_progress:'In Progress',
+    confirm_wait:'Awaiting Final Review', shipped:'Shipped'
+  };
+  var nextLabelMap = {
+    quote:'Move to Awaiting Deposit', deposit_wait:'Move to In Progress',
+    in_progress:'Move to Awaiting Final Review', confirm_wait:'Move to Shipped'
+  };
+  var chipClassMap = {
+    quote:'quote', deposit_wait:'wait', in_progress:'active',
+    confirm_wait:'active', shipped:'done'
+  };
+  var stepperNodes = [
+    ['quote','Quote'], ['deposit_wait','Deposit'], ['in_progress','Production'],
+    ['confirm_wait','Review'], ['shipped','Ship']
+  ];
+  var fallbackTracking = {
+    alex:'USPS 9400 1000 0000 0552 1778 8',
+    jordan:'UPS 1Z 330 144 29 8812 3456',
+    morgan:'FedEx 9087 1123 4557',
+    sarah:'USPS 9400 1000 0000 6140 2285 7'
+  };
+
+  var deals = [
+    { id:'alex', client:'Alex Rivera', character:'Mira Duskwater (original character)', status:'quote',
+      received:'12/02', wearDate:'12/20', deliveryDate:'12/15',
+      refs:['Front','Side','Reference'],
+      specs:[['Brand','Custom base (handmade)'],['Color','Deep blue → black ombré'],['Length','Medium (18 in)'],['Bangs','Blunt bangs'],['Part','None'],['Hairline','Standard']],
+      quote:[['Base wig',90],['Styling fee',110],['Custom work (mesh highlights)',35],['Shipping',15]],
+      quoteApprovedByClient:false, archived:false },
+
+    { id:'jordan', client:'Jordan Hale', character:'Lyra Frostvale (original character)', status:'deposit_wait',
+      received:'11/20', wearDate:'12/14', deliveryDate:'12/09',
+      refs:['Front','Side'],
+      specs:[['Brand','Velvet Moon Wigs'],['Color','Ice blue'],['Length','Long (28 in)'],['Bangs','None'],['Part','70/30'],['Hairline','Standard']],
+      quote:[['Base wig',120],['Styling fee',70],['Shipping',12]],
+      approvedDate:'11/25',
+      paymentReportedByClient:true, archived:false },
+
+    { id:'morgan', client:'Morgan Pierce', character:'Vesper Emberlynn (original character)', status:'in_progress',
+      received:'11/05', wearDate:'11/30', deliveryDate:'11/25', warn:true, deadlineNote:'5 days left',
+      refs:['Front','Side','Reference'],
+      specs:[['Brand','CharaWig Studio'],['Color','Autumn red'],['Length','Long (30 in)'],['Bangs','See-through bangs'],['Part','Center'],['Hairline','Lace front']],
+      quote:[['Base wig',140],['Styling fee',100],['Custom work (braiding)',25],['Shipping',15]],
+      approvedDate:'11/08',
+      progressNote:'Wefting and cut adjustments are done. Lace front finishing is next.',
+      progressPhotos:2, archived:false },
+
+    { id:'sarah', client:'Sarah Whitfield', character:'Frieren (cosplay wig)', status:'confirm_wait',
+      received:'10/01', wearDate:'10/28', deliveryDate:'10/23',
+      refs:['Front','Side','Back'],
+      specs:[['Brand','No brand (handmade)'],['Color','Ash blonde → white gradient'],['Length','Long (33 in)'],['Bangs','Center-parted blunt bangs'],['Part','Center'],['Hairline','Lace front']],
+      quote:[['Base wig',130],['Styling fee',100],['Custom work (color blending)',40],['Shipping',18]],
+      approvedDate:'10/10',
+      share:{final:true, progress:true}, shareActive:true,
+      clientConfirmed:false, archived:false },
+
+    { id:'riley', client:'Riley Donovan', character:'Thistle Ashgrove (original character)', status:'shipped',
+      received:'10/15', wearDate:'11/25', deliveryDate:'11/18',
+      refs:['Front','Side'],
+      specs:[['Brand','No brand'],['Color','Ash gray'],['Length','Medium (20 in)'],['Bangs','Yes'],['Part','Center'],['Hairline','Standard']],
+      quote:[['Base wig',110],['Styling fee',80],['Shipping',14]],
+      approvedDate:'10/20',
+      tracking:'UPS 1Z 482 100 93 5567 1234',
+      clientReportedArrival:false, archived:false }
+  ];
+
+  var currentDealId = 'sarah';
+
+  function findDeal(id){
+    for(var i=0;i<deals.length;i++){ if(deals[i].id===id) return deals[i]; }
+    return null;
+  }
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function nb(s){ return '<span class="nb">'+s+'</span>'; }
+  function nbJoin(arr){ return arr.map(nb).join(''); }
+
+  function money(amount){ return '$'+amount.toLocaleString('en-US'); }
+  function quoteTotal(d){
+    var sum = 0;
+    for(var i=0;i<d.quote.length;i++) sum += d.quote[i][1];
+    return sum;
+  }
+  function quoteLinesHTML(lines, total){
+    var html = '';
+    for(var i=0;i<lines.length;i++){
+      html += '<div class="quote-line"><span>'+lines[i][0]+'</span><span>'+money(lines[i][1])+'</span></div>';
+    }
+    if(!lines.length) html += '<div class="note" style="margin:0 0 6px">No quote items added yet.</div>';
+    html += '<div class="quote-total"><span>Total</span><span>'+money(total)+'</span></div>';
+    return html;
+  }
+
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
+
+  function refsHTML(refs){
+    var thumbs = '';
+    for(var i=0;i<refs.length;i++){
+      thumbs += '<div class="attach thumb">'+ICON+'<b>'+refs[i]+'</b></div>';
+    }
+    if(!refs.length) thumbs = '<div class="attach thumb add"><b>+ Add</b><span>Attach image</span></div>';
+    return '<div class="sec"><h3>Reference Images (attached)</h3><div class="refs">'+thumbs+'</div>'+
+      '<div class="note">Images received from the client appear here.</div></div>';
+  }
+  function specsHTML(specs){
+    var rows = '';
+    for(var i=0;i<specs.length;i++){ rows += '<dt>'+specs[i][0]+'</dt><dd>'+specs[i][1]+'</dd>'; }
+    return '<div class="sec"><h3>Wig Specs</h3><dl class="spec-grid">'+rows+'</dl></div>';
+  }
+
+  function stepperHTML(status){
+    var idx = STATUS_ORDER.indexOf(status);
+    var row = '';
+    for(var i=0;i<stepperNodes.length;i++){
+      var label = stepperNodes[i][1];
+      var state = i<idx ? 'done' : (i===idx ? 'current' : 'upcoming');
+      row += '<div class="step '+state+'"><span class="dot">'+(state==='done' ? '✓' : (i+1))+'</span><span class="label">'+label+'</span></div>';
+      if(i < stepperNodes.length-1){
+        row += '<span class="step-line '+(i<idx ? 'done' : '')+'"></span>';
+      }
+    }
+    return '<div class="stepper">'+row+'</div><div class="stepper-note">References and specs form the basis of this quote</div>';
+  }
+
+  /* what the customer can see / do at each step */
+  function capability(d){
+    var dates = 'Wear date & delivery date';
+    if(d.archived) return { see:['Order details (completed)'], act:['None'] };
+    if(d.status==='quote'){
+      return {
+        see:['Quote amount & breakdown','Wig specs & references',dates],
+        act: d.quoteApprovedByClient
+          ? ['None (waiting on the maker)','Send a question or message']
+          : ['Approve this quote','Request quote changes','Send a question or message']
+      };
+    }
+    if(d.status==='deposit_wait'){
+      return {
+        see:['Amount due','Payment details',dates],
+        act: d.paymentReportedByClient
+          ? ['None (waiting on confirmation)','Send a question or message']
+          : ['Report payment sent','Send a question or message']
+      };
+    }
+    if(d.status==='in_progress'){
+      return {
+        see:['Progress notes','Shared in-progress photos',dates],
+        act:['Send a question or message (the approved quote can\'t be changed)']
+      };
+    }
+    if(d.status==='confirm_wait'){
+      return {
+        see:['Final photos (if shared)','Approved quote','Estimated ship date',dates],
+        act:['Request a minor fix','Mark as approved (moves to shipping)','Send a question or message']
+      };
+    }
+    return {
+      see:['Carrier & tracking number',dates],
+      act: d.clientReportedArrival
+        ? ['None (arrival already reported)','Send a question or message']
+        : ['Report it arrived','Send a question or message']
+    };
+  }
+  function listHTML(items){
+    return '<ul>'+items.map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul>';
+  }
+  function capHTML(d, title){
+    var c = capability(d);
+    return '<div class="cap"><h4>'+title+'</h4>'+
+      '<div class="cap-row"><span class="tag see">Can view</span><div>'+listHTML(c.see)+'</div></div>'+
+      '<div class="cap-row"><span class="tag act">Can do</span><div>'+listHTML(c.act)+'</div></div></div>';
+  }
+
+  function attachTilesHTML(n, label, withAdd){
+    var html = '<div class="tiles">';
+    for(var i=0;i<n;i++){
+      html += '<div class="attach tile">'+ICON+'<b>'+label+' '+(i+1)+'</b><span>Image attachment area</span></div>';
+    }
+    if(withAdd) html += '<div class="attach tile add"><b>+ Add</b><span>Attach image</span></div>';
+    return html+'</div>';
+  }
+
+  function quoteFullSectionHTML(d, total){
+    var note = d.quoteApprovedByClient
+      ? '<div class="banner good">✅ Client approved the quote</div>'
+      : '<div class="note">The client can review and approve this on their page.</div>';
+    return '<div class="sec current"><h3>Quote (drafting)</h3>'+quoteLinesHTML(d.quote,total)+note+'</div>';
+  }
+  function quoteCompactSectionHTML(d, total){
+    return '<div class="sec"><h3>Quote</h3>'+
+      '<div class="quote-compact-row"><span>Total</span><span>'+money(total)+'</span></div>'+
+      '<div class="quote-compact-sub">Approved'+(d.approvedDate ? ' · '+d.approvedDate : '')+'</div></div>';
+  }
+
+  function stageSectionHTML(d){
+    if(d.status==='deposit_wait'){
+      var payNote = d.paymentReportedByClient
+        ? '<div class="banner good">✅ Client reported payment sent</div>'
+        : '<div class="note">Once you\'ve confirmed payment, use the button below to continue.</div>';
+      return '<div class="sec current"><h3>Payment</h3>'+
+        '<div class="info-card"><div class="k">Payment method</div><div class="v">Zelle · sent to wigflow.studio@example.com</div></div>'+
+        payNote+'</div>';
+    }
+    if(d.status==='in_progress'){
+      return '<div class="sec current"><h3>Production Status</h3>'+
+        '<div class="note" style="margin-top:0">'+(d.progressNote || 'In progress.')+'</div>'+
+        '<div style="margin-top:10px;font-size:11px;color:var(--ink-soft)">In-progress photos ('+(d.progressPhotos||0)+' attached)</div>'+
+        '<div style="margin-top:6px">'+attachTilesHTML(d.progressPhotos||0,'Progress photo',true)+'</div></div>';
+    }
+    if(d.status==='confirm_wait'){
+      var shareBtns = d.shareActive
+        ? '<button class="btn primary" data-action="copy-link" type="button">Copy share link</button><button class="btn" data-action="toggle-link-active" type="button">Disable share link</button>'
+        : '<button class="btn" data-action="toggle-link-active" type="button">Re-enable share link</button>';
+      return '<div class="sec current"><h3>Share with Client</h3>'+
+        '<div class="share-row" data-action="toggle-final"><div class="toggle '+(d.share.final?'':'off')+'"></div> Share final photos</div>'+
+        '<div class="share-row" data-action="toggle-progress"><div class="toggle '+(d.share.progress?'':'off')+'"></div> Share in-progress photos</div>'+
+        '<div class="note">Costs, internal notes, and other orders are never shown on the client page.</div>'+
+        shareBtns+'</div>';
+    }
+    if(d.status==='shipped'){
+      var arrNote = d.clientReportedArrival
+        ? '<div class="banner good" style="margin-top:8px">✅ Client reported it arrived</div>'
+        : '<div class="note" style="margin-top:8px">Waiting on the client to confirm arrival.</div>';
+      return '<div class="sec current"><h3>Shipping Info</h3>'+
+        '<div class="info-card"><div class="k">Carrier & tracking number</div><div class="v">'+d.tracking+'</div></div>'+
+        arrNote+'</div>';
+    }
+    return '';
+  }
+
+  function footerButtonsHTML(d){
+    var html = '<div class="sec">';
+    if(d.status!=='shipped'){
+      html += '<button class="btn primary" data-action="advance" type="button">'+nextLabelMap[d.status]+'</button>';
+    } else if(!d.archived){
+      html += '<button class="btn primary" data-action="archive" type="button">Mark order complete</button>';
+    }
+    html += '<button class="btn" data-action="preview-client" type="button">View client page</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function buildDetailHTML(d){
+    var total = quoteTotal(d);
+    var html = '<div class="detail-head">'+
+      '<div class="name">'+esc(d.client)+' / '+esc(d.character)+'</div>'+
+      '<div class="sub">'+nb('Received '+d.received)+nb('Wear date '+d.wearDate)+nb('Delivery date '+d.deliveryDate)+'</div>'+
+      '<span class="status-pill '+d.status+'">'+statusLabel[d.status]+'</span>'+
+    '</div>';
+    html += stepperHTML(d.status);
+    html += refsHTML(d.refs);
+    html += specsHTML(d.specs);
+    html += (d.status==='quote') ? quoteFullSectionHTML(d,total) : quoteCompactSectionHTML(d,total);
+    html += stageSectionHTML(d);
+    html += capHTML(d, 'What the client can do at this stage');
+    html += footerButtonsHTML(d);
+    return html;
+  }
+
+  function buildPolicyLinkHTML(){
+    return '<div class="policy-link"><span>'+nb('Terms of Service')+nb('(revisions, cancellations, shipping)')+'</span> <span>›</span></div>';
+  }
+
+  function buildClientHTML(d){
+    var headline;
+    if(d.archived){
+      headline = ['Thank you for your business.','This order is complete.'];
+    } else if(d.status==='quote'){
+      headline = d.quoteApprovedByClient ? ['Thanks for approving!','We\'ll be in touch','shortly.'] : ['Please review','your quote'];
+    } else if(d.status==='deposit_wait'){
+      headline = d.paymentReportedByClient ? ['Thanks for letting us know.','We\'ll confirm shortly.'] : ['Payment','is due'];
+    } else if(d.status==='in_progress'){
+      headline = ['In progress.','We\'ll share updates soon.'];
+    } else if(d.status==='confirm_wait'){
+      headline = ['All done!','Please take a look'];
+    } else if(d.status==='shipped'){
+      headline = d.clientReportedArrival ? ['Thanks for letting us know!'] : ['Shipped!'];
+    }
+
+    var html = '<div class="client-status">'+
+      '<div class="label">'+esc(d.character)+'</div>'+
+      '<div class="headline">'+nbJoin(headline)+'</div>'+
+      '<div class="sub-note">This never includes internal costs or other orders.</div>'+
+    '</div>';
+
+    if(d.archived){ return html + buildPolicyLinkHTML(); }
+
+    var total = quoteTotal(d);
+
+    html += capHTML(d, 'What you can do right now');
+
+    html += '<div class="date-pair">'+
+      '<div class="info-card"><div class="k">Wear date</div><div class="v">'+d.wearDate+'</div></div>'+
+      '<div class="info-card"><div class="k">Delivery date</div><div class="v">'+d.deliveryDate+'</div></div>'+
+    '</div>';
+
+    if(d.status==='confirm_wait'){
+      html += (d.share && d.share.final)
+        ? '<div class="attach big">'+ICON+'<b>Final photo attachment area</b><span>Final photos the maker attaches will appear here</span></div>'
+        : '<div class="attach big">'+ICON+'<b>Not shared yet</b><span>Final photos will appear here once the maker shares them</span></div>';
+    }
+
+    if(d.status==='quote'){
+      html += '<div class="info-card"><div class="k">Quote</div>'+quoteLinesHTML(d.quote,total)+'</div>';
+      if(!d.quoteApprovedByClient){
+        html += '<div class="action-row">'+
+          '<button class="btn primary" data-action="approve-quote" type="button">Approve this quote</button>'+
+          '<button class="btn" data-action="open-revision" data-tag="[Quote revision request] " type="button">Request quote changes</button>'+
+        '</div>';
+      }
+    } else if(d.status==='deposit_wait'){
+      html += '<div class="info-card"><div class="k">Amount due</div><div class="v">'+money(total)+'</div></div>'+
+        '<div class="info-card"><div class="k">Payment details</div><div class="v">Zelle · sent to wigflow.studio@example.com</div></div>';
+      if(!d.paymentReportedByClient){
+        html += '<div class="action-row"><button class="btn primary" data-action="report-payment" type="button">Let them know I\'ve paid</button></div>';
+      }
+    } else if(d.status==='in_progress'){
+      html += '<div class="info-card"><div class="k">Shared in-progress photos ('+(d.progressPhotos||0)+')</div>'+
+        '<div style="margin-top:8px">'+attachTilesHTML(d.progressPhotos||0,'Progress photo',false)+'</div>'+
+        '<div class="note">In the real app, in-progress photos the maker attaches will appear here.</div></div>';
+    } else if(d.status==='confirm_wait'){
+      html += '<div class="action-row">'+
+        '<button class="btn primary" data-action="confirm-complete" type="button">Mark as approved</button>'+
+        '<button class="btn" data-action="open-revision" data-tag="[Minor fix request] " type="button">Request a minor fix</button>'+
+      '</div>'+
+      '<div class="info-card"><div class="k">Quote (approved)</div><div class="v">'+money(total)+'</div></div>'+
+      '<div class="info-card"><div class="k">Estimated ship date</div><div class="v">Ships within 3 days of final approval</div></div>';
+    } else if(d.status==='shipped'){
+      html += '<div class="info-card"><div class="k">Carrier & tracking number</div><div class="v">'+(d.tracking || 'Arranging')+'</div></div>';
+      if(!d.clientReportedArrival){
+        html += '<div class="action-row"><button class="btn primary" data-action="report-arrival" type="button">Let them know it arrived</button></div>';
+      }
+    }
+
+    html += '<div class="info-card inquiry"><div class="k" style="font-weight:700;color:var(--ink)">Questions & Messages</div>'+
+      '<textarea id="inq-text" placeholder="Enter your question or message for the maker"></textarea>'+
+      '<button class="btn primary" data-action="send-inquiry" type="button">Send</button></div>';
+
+    html += buildPolicyLinkHTML();
+    return html;
+  }
+
+  function advanceDeal(d){
+    var idx = STATUS_ORDER.indexOf(d.status);
+    if(idx<0 || idx>=STATUS_ORDER.length-1) return;
+    d.status = STATUS_ORDER[idx+1];
+    if(d.status==='confirm_wait'){
+      if(!d.share) d.share = {final:true, progress:true};
+      if(d.shareActive===undefined) d.shareActive = true;
+      if(!d.approvedDate) d.approvedDate = '—';
+    }
+    if(d.status==='shipped'){
+      if(!d.tracking) d.tracking = fallbackTracking[d.id] || 'Arranging';
+    }
+  }
+
+  function needsAttention(d){
+    if(d.status==='quote') return !!d.quoteApprovedByClient;
+    if(d.status==='deposit_wait') return !!d.paymentReportedByClient;
+    if(d.status==='shipped') return !!d.clientReportedArrival;
+    return false;
+  }
+  function nextText(d){
+    if(d.status==='quote') return d.quoteApprovedByClient ? 'Move to awaiting deposit (approved)' : 'Review & send the quote';
+    if(d.status==='deposit_wait') return d.paymentReportedByClient ? 'Confirm payment & move to in progress' : 'Send a payment reminder';
+    if(d.status==='in_progress') return 'Add in-progress photos';
+    if(d.status==='confirm_wait') return 'Send final photos for review';
+    if(d.status==='shipped') return d.clientReportedArrival ? 'Review arrival report' : 'Waiting on arrival confirmation';
+    return '';
+  }
+
+  function cardHTML(d){
+    var chipClass = chipClassMap[d.status];
+    var warn = d.warn ? ' class="warn"' : '';
+    var dateLine = nb('Wear date '+d.wearDate)+
+      '<span class="nb"'+warn+'>Delivery date '+d.deliveryDate+(d.deadlineNote ? ' · '+d.deadlineNote : '')+'</span>';
+    var badge = needsAttention(d) ? '<div class="badge">1</div>' : '';
+    return '<div class="card" data-id="'+d.id+'">'+badge+
+      '<div class="row1"><span class="client">'+esc(d.client)+'</span><span class="chip '+chipClass+'">'+statusLabel[d.status]+'</span></div>'+
+      '<div class="char">'+esc(d.character)+'</div>'+
+      '<div class="meta"><div class="dates">'+dateLine+'</div></div>'+
+      '<div class="next">Next: '+nextText(d)+'</div>'+
+    '</div>';
+  }
+  function renderColumn(statusKey){
+    var list = [];
+    for(var i=0;i<deals.length;i++){
+      if(deals[i].status===statusKey && !deals[i].archived) list.push(deals[i]);
+    }
+    var cardsHTML = list.length ? list.map(cardHTML).join('') : '<div class="note" style="margin:0 4px 8px">None right now</div>';
+    return '<div class="col"><div class="col-head"><span class="name">'+statusLabel[statusKey]+'</span><span class="count">'+list.length+'</span></div>'+cardsHTML+'</div>';
+  }
+
+  var boardScroll = document.getElementById('board-scroll');
+  var detailScroll = document.getElementById('detail-scroll');
+  var clientScroll = document.getElementById('client-scroll');
+  var toastEl = document.getElementById('toast');
+  var captionBox = document.getElementById('caption-box');
+  var tabs = document.querySelectorAll('.tabbar button');
+  var screens = {
+    board: document.getElementById('screen-board'),
+    detail: document.getElementById('screen-detail'),
+    client: document.getElementById('screen-client'),
+    new: document.getElementById('screen-new')
+  };
+
+  var captions = {
+    board: { title:'① Maker\'s Order Board', body:'See every order\'s status, wear date, and delivery date at a glance. Tap a card to open its references, quote, and progress all in one place.' },
+    detail: { title:'② Order Detail', body:'References, specs, quote, progress, final approval, and shipping — all connected for a single order. Advancing the status moves the board column too. You can also see what the client can view and do at each stage.' },
+    client: { title:'③ Client Page', body:'Clients only see their order\'s current status, what they can view or do, final photos, and shipping info. The question box is always available. Internal notes and other orders are never shown.' }
+  };
+  function updateCaption(key){
+    var c = captions[key];
+    captionBox.innerHTML = '<strong>'+c.title+'</strong>'+c.body;
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+
+  function renderBoard(){ boardScroll.innerHTML = STATUS_ORDER.map(renderColumn).join(''); }
+  function renderDetail(id){
+    currentDealId = id;
+    var d = findDeal(id);
+    if(!d) return;
+    detailScroll.innerHTML = buildDetailHTML(d);
+  }
+  function renderClient(id){
+    currentDealId = id;
+    var d = findDeal(id);
+    if(!d) return;
+    var prev = document.getElementById('inq-text');
+    var keep = prev ? prev.value : '';
+    clientScroll.innerHTML = buildClientHTML(d);
+    var now = document.getElementById('inq-text');
+    if(now && keep) now.value = keep;
+  }
+
+  function selectTab(key){
+    var tabKey = (key==='new') ? 'board' : key;
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', t.dataset.target===tabKey ? 'true' : 'false'); });
+    Object.keys(screens).forEach(function(k){ screens[k].hidden = (k!==key); });
+    updateCaption(tabKey);
+    if(key==='new') resetNewForm();
+    else if(key==='board') renderBoard();
+    else if(key==='detail') renderDetail(currentDealId);
+    else if(key==='client') renderClient(currentDealId);
+  }
+  function openDetail(id){ currentDealId = id; selectTab('detail'); }
+  function openClient(id){ currentDealId = id; selectTab('client'); }
+  function goBoard(){ selectTab('board'); }
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){ selectTab(tab.dataset.target); });
+  });
+  document.getElementById('detail-back').addEventListener('click', goBoard);
+  document.getElementById('client-back').addEventListener('click', goBoard);
+
+  boardScroll.addEventListener('click', function(e){
+    var card = e.target.closest('.card[data-id]');
+    if(card) openDetail(card.getAttribute('data-id'));
+  });
+
+  detailScroll.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var d = findDeal(currentDealId);
+    if(!d) return;
+    var action = el.getAttribute('data-action');
+    if(action==='advance'){
+      advanceDeal(d); toast('Status moved to "'+statusLabel[d.status]+'"'); renderDetail(d.id);
+    } else if(action==='preview-client'){
+      openClient(d.id);
+    } else if(action==='toggle-final'){
+      d.share.final = !d.share.final; renderDetail(d.id);
+    } else if(action==='toggle-progress'){
+      d.share.progress = !d.share.progress; renderDetail(d.id);
+    } else if(action==='copy-link'){
+      if(d.shareActive){ toast('Share link copied'); }
+    } else if(action==='toggle-link-active'){
+      d.shareActive = !d.shareActive;
+      toast(d.shareActive ? 'Share link re-enabled' : 'Share link disabled');
+      renderDetail(d.id);
+    } else if(action==='archive'){
+      d.archived = true; toast('Order archived as complete'); goBoard();
+    }
+  });
+
+  clientScroll.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var d = findDeal(currentDealId);
+    if(!d) return;
+    var action = el.getAttribute('data-action');
+    if(action==='approve-quote'){
+      d.quoteApprovedByClient = true; toast('Quote approved'); renderClient(d.id);
+    } else if(action==='report-payment'){
+      d.paymentReportedByClient = true; toast('Payment report sent'); renderClient(d.id);
+    } else if(action==='confirm-complete'){
+      d.clientConfirmed = true; advanceDeal(d); toast('Thanks for confirming! Preparing to ship'); renderClient(d.id);
+    } else if(action==='report-arrival'){
+      d.clientReportedArrival = true; toast('Arrival report sent'); renderClient(d.id);
+    } else if(action==='open-revision'){
+      var ta = document.getElementById('inq-text');
+      if(ta){
+        var tag = el.getAttribute('data-tag') || '';
+        if(!ta.value) ta.value = tag + '\n';
+        ta.focus();
+        ta.scrollIntoView({block:'center', behavior:'smooth'});
+      }
+    } else if(action==='send-inquiry'){
+      var t = document.getElementById('inq-text');
+      if(!t || !t.value.trim()){ toast('Please enter a message'); return; }
+      toast('Sent! The maker will get back to you soon');
+      t.value = '';
+    }
+  });
+
+  /* ---------- feedback: right card on PC, bottom sheet on narrow screens ---------- */
+  var sheet = document.getElementById('survey');
+  var backdrop = document.getElementById('fb-backdrop');
+  var fbOpen = document.getElementById('fb-open');
+  function openSheet(){
+    sheet.classList.add('open'); backdrop.classList.add('open');
+    document.documentElement.classList.add('lock');
+    fbOpen.setAttribute('aria-expanded','true');
+    var first = sheet.querySelector('input, textarea, button');
+    if(first) setTimeout(function(){ first.focus({preventScroll:true}); }, 260);
+  }
+  function closeSheet(){
+    sheet.classList.remove('open'); backdrop.classList.remove('open');
+    document.documentElement.classList.remove('lock');
+    fbOpen.setAttribute('aria-expanded','false');
+  }
+  fbOpen.addEventListener('click', openSheet);
+  backdrop.addEventListener('click', closeSheet);
+  document.getElementById('sheet-x').addEventListener('click', closeSheet);
+  document.getElementById('survey-close').addEventListener('click', closeSheet);
+  document.getElementById('thanks-close').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSheet(); });
+
+  var surveyForm = document.getElementById('survey-form');
+  var surveyThanks = document.getElementById('survey-thanks');
+  var surveySubmitBtn = document.getElementById('survey-submit');
+  var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mzedggjg';
+  surveyForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!surveyForm.querySelector('input[name="q2"]:checked')){
+      toast('Please select at least one option for Q2');
+      var first = surveyForm.querySelector('input[name="q2"]'); if(first) first.focus();
+      return;
+    }
+    var fd = new FormData(surveyForm);
+    fd.append('_subject', 'WigFlow prototype feedback (EN)');
+    fd.append('locale', 'en');
+    surveySubmitBtn.disabled = true;
+    surveySubmitBtn.textContent = 'Sending…';
+    fetch(FORMSPREE_ENDPOINT, { method:'POST', body:fd, headers:{ 'Accept':'application/json' } })
+      .then(function(res){
+        if(res.ok){
+          surveyForm.hidden = true;
+          surveyThanks.hidden = false;
+        } else {
+          return res.json().then(function(data){
+            var msg = (data && data.errors && data.errors.length) ? data.errors.map(function(er){ return er.message; }).join(', ') : 'Something went wrong. Please try again.';
+            toast(msg);
+          });
+        }
+      })
+      .catch(function(){
+        toast('Network error — please try again.');
+      })
+      .then(function(){
+        surveySubmitBtn.disabled = false;
+        surveySubmitBtn.textContent = 'Submit';
+      });
+  });
+
+  /* ---------- new deal form (in-memory only; cleared on reload) ---------- */
+  var newForm = document.getElementById('new-form');
+  var nfStatus = document.getElementById('nf-status');
+  var newSeq = 0;
+  nfStatus.innerHTML = STATUS_ORDER.map(function(s){
+    return '<option value="'+s+'">'+statusLabel[s]+'</option>';
+  }).join('');
+
+  var SPEC_KEYS = ['Brand','Color','Length','Bangs','Part','Hairline'];
+  var COST_KEYS = ['Materials','Styling fee','Custom work fee','Shipping'];
+  var PHOTO_COUNT = 3;
+  var photoOn = [false,false,false];
+  var nfSpecs = document.getElementById('nf-specs');
+  var nfCosts = document.getElementById('nf-costs');
+  var nfTotal = document.getElementById('nf-total');
+  var nfPhotos = document.getElementById('nf-photos');
+
+  nfSpecs.innerHTML = SPEC_KEYS.map(function(k,i){
+    return '<div class="nf-field"><label for="nf-spec-'+i+'">'+k+'</label><input id="nf-spec-'+i+'" type="text" maxlength="40"></div>';
+  }).join('');
+  nfCosts.innerHTML = COST_KEYS.map(function(k,i){
+    return '<div class="nf-field"><label for="nf-cost-'+i+'">'+k+' ($)</label><input id="nf-cost-'+i+'" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></div>';
+  }).join('');
+
+  function costValue(i){
+    var v = parseInt(document.getElementById('nf-cost-'+i).value, 10);
+    return (isNaN(v) || v<0) ? 0 : v;
+  }
+  function updateTotal(){
+    var sum = 0;
+    for(var i=0;i<COST_KEYS.length;i++) sum += costValue(i);
+    nfTotal.textContent = money(sum);
+  }
+  nfCosts.addEventListener('input', updateTotal);
+
+  function renderNfPhotos(){
+    var html = '';
+    for(var i=0;i<PHOTO_COUNT;i++){
+      html += photoOn[i]
+        ? '<button type="button" class="attach tile on" data-i="'+i+'" aria-pressed="true">'+ICON+'<b>✓ Attached</b><span>Reference '+(i+1)+' (dummy)</span></button>'
+        : '<button type="button" class="attach tile" data-i="'+i+'" aria-pressed="false">'+ICON+'<b>+ Attach image</b><span>(dummy)</span></button>';
+    }
+    nfPhotos.innerHTML = html;
+  }
+  nfPhotos.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-i]');
+    if(!b) return;
+    var i = parseInt(b.getAttribute('data-i'),10);
+    photoOn[i] = !photoOn[i];
+    renderNfPhotos();
+  });
+
+  function resetNewForm(){
+    newForm.reset();
+    nfStatus.value = 'quote';
+    photoOn = [false,false,false];
+    renderNfPhotos();
+    updateTotal();
+  }
+  function pad2(n){ return (n<10 ? '0' : '') + n; }
+  function fmtDate(v){
+    var m = /^\d{4}-(\d{2})-(\d{2})$/.exec(v || '');
+    return m ? (m[1]+'/'+m[2]) : '';
+  }
+
+  document.getElementById('add-btn').addEventListener('click', function(){ selectTab('new'); });
+  document.getElementById('new-back').addEventListener('click', goBoard);
+  document.getElementById('new-cancel').addEventListener('click', goBoard);
+
+  newForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var character = document.getElementById('nf-character').value.trim();
+    var client = document.getElementById('nf-client').value.trim();
+    var wear = fmtDate(document.getElementById('nf-wear').value);
+    var delivery = fmtDate(document.getElementById('nf-delivery').value);
+    var target = nfStatus.value;
+    var specs = SPEC_KEYS.map(function(k,i){
+      var v = document.getElementById('nf-spec-'+i).value.trim();
+      return [k, v ? esc(v) : 'Not entered'];
+    });
+    var quote = [];
+    COST_KEYS.forEach(function(k,i){ var v = costValue(i); if(v>0) quote.push([k, v]); });
+    var refs = [];
+    photoOn.forEach(function(on,i){ if(on) refs.push('Reference '+(i+1)); });
+    if(!character || !client || !wear){ toast('Please fill in order name, client name, and wear date'); return; }
+
+    var now = new Date();
+    var d = {
+      id:'new'+(++newSeq), client:client, character:character, status:'quote',
+      received: pad2(now.getMonth()+1)+'/'+pad2(now.getDate()),
+      wearDate:wear, deliveryDate:delivery || 'Not set',
+      refs:refs, specs:specs, quote:quote, quoteApprovedByClient:false, archived:false
+    };
+    while(d.status!==target){ advanceDeal(d); }
+    deals.push(d);
+
+    goBoard();
+    toast('Order "'+character+'" added to the board');
+    var card = boardScroll.querySelector('.card[data-id="'+d.id+'"]');
+    if(card){
+      card.classList.add('just-added');
+      card.scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  });
+
+  renderBoard();
+  updateCaption('board');
+
+})();
+</script>
+
+</body>
+</html>

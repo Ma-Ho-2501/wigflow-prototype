@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WigFlow Prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Shippori+Mincho:wght@600;700&family=Inter:wght@400;600;700&display=swap">
+<style>
+  :root{
+    --page-bg:#150f1f;
+    --page-ink:#f4eef8;
+    --page-ink-soft:#b9a7c7;
+    --accent:#c23f74;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--page-bg);color:var(--page-ink);
+    font-family:"Inter","Hiragino Sans",sans-serif;
+    padding:24px;
+  }
+  .wrap{max-width:420px;text-align:center}
+  h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(26px,6vw,34px);margin:0 0 10px}
+  p{color:var(--page-ink-soft);font-size:14px;line-height:1.7;margin:0 0 28px}
+  .choices{display:flex;flex-direction:column;gap:12px}
+  a.choice{
+    display:block;padding:16px 18px;border-radius:14px;text-decoration:none;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);
+    color:var(--page-ink);transition:background .15s,border-color .15s;
+  }
+  a.choice:hover{background:var(--accent);border-color:var(--accent)}
+  a.choice .lang{font-weight:700;font-size:15px}
+  a.choice .sub{font-size:12px;color:var(--page-ink-soft);margin-top:3px}
+  a.choice:hover .sub{color:#fbe4ec}
+  .jp .lang{font-family:"Shippori Mincho",serif}
+  footer{margin-top:24px;font-size:11px;color:var(--page-ink-soft);line-height:1.7}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>WigFlow Prototype</h1>
+    <p>An interactive prototype for commission-based wig makers to manage orders — from intake to delivery — in one place. Choose a language to try it.</p>
+    <div class="choices">
+      <a class="choice" href="en/">
+        <div class="lang">English</div>
+        <div class="sub">For international clients · USD</div>
+      </a>
+      <a class="choice jp" href="jp/">
+        <div class="lang">日本語</div>
+        <div class="sub">国内のお客様向け · 円建て</div>
+      </a>
+    </div>
+    <footer>No account needed for feedback. No data is stored.<br>This is a concept prototype, not an app available on the App Store.</footer>
+  </div>
+</body>
+</html>

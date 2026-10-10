@@ -1,0 +1,1262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WigFlow プロトタイプ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* Layout: PC = left mock (tabs + description above it) / right feedback card. Narrow or phone = full-width mock + fixed bottom feedback button that opens a sheet. */
+
+  --page-bg:#150f1f;
+  --page-ink:#f4eef8;
+  --page-ink-soft:#b9a7c7;
+  --page-line:rgba(255,255,255,.14);
+
+  --accent:#c23f74;
+  --accent-soft:#fbe4ec;
+  --yellow:#d99a0b;
+  --yellow-line:#f2c230;
+
+  --bg:#f6f1f7;
+  --surface:#ffffff;
+  --surface-soft:#f1e8ef;
+  --ink:#241a2e;
+  --ink-soft:#6f6678;
+  --line:#e5dbe6;
+
+  --gold:#a8762a;
+  --gold-soft:#f7ecd6;
+  --green:#3f7d5c;
+  --green-soft:#e1efe7;
+  --danger:#b1453b;
+  --danger-soft:#f6e0dd;
+
+  --font-display:"Shippori Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+
+  --shadow:0 24px 50px -24px rgba(10,6,16,.6);
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html.lock{overflow:hidden}
+body{
+  background:var(--page-bg);
+  color:var(--page-ink);
+  font-family:var(--font-body);
+  padding:28px 16px 44px;
+  font-variant-numeric:tabular-nums;
+  word-break:auto-phrase;
+  line-break:strict;
+  overflow-wrap:break-word;
+}
+.nb{display:inline-block;white-space:nowrap}
+
+.page{max-width:1120px;margin:0 auto}
+
+.proto-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.proto-badges span{
+  font-size:12px;font-weight:700;letter-spacing:.03em;color:#fff;
+  border-radius:999px;padding:6px 14px;
+  background:var(--yellow);white-space:nowrap;
+}
+.masthead p+p{margin-top:14px}
+.masthead p.lead{font-weight:700;color:var(--page-ink)}
+.masthead p.small{font-size:12px;line-height:1.9}
+.hl{background:var(--yellow-line);color:var(--page-bg);font-weight:700;padding:3px 8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.footnote-gap{display:block;height:.9em}
+
+.masthead{margin-bottom:8px}
+.masthead h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(28px,6vw,38px);margin:4px 0 10px;color:var(--page-ink);
+}
+.masthead p{color:var(--page-ink-soft);font-size:14px;line-height:1.8;max-width:640px;margin:0}
+
+/* ---------- main layout ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:40px;align-items:start;margin-top:8px}
+.mock-col{min-width:0;display:flex;flex-direction:column;align-items:center}
+.mock-wrap{width:min(100%,360px)}
+.feedback-col{min-width:0;position:sticky;top:20px}
+
+.tabbar{display:flex;gap:6px;margin:20px 0 14px}
+.tabbar button{
+  flex:1 1 0;min-width:0;white-space:nowrap;
+  font-family:inherit;font-size:13px;font-weight:700;
+  padding:10px 8px;border-radius:999px;border:1px solid var(--page-line);
+  background:rgba(255,255,255,.04);color:var(--page-ink-soft);cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.tabbar button[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.caption{
+  font-size:13px;line-height:1.8;color:var(--page-ink-soft);
+  background:rgba(255,255,255,.05);border:1px solid var(--page-line);border-radius:16px;
+  padding:14px 18px;margin-bottom:16px;
+}
+.caption strong{display:block;color:var(--page-ink);font-size:14px;margin-bottom:4px;font-family:var(--font-display)}
+
+.phone{
+  position:relative;width:100%;
+  background:#120d1a;border:1px solid rgba(255,255,255,.08);
+  border-radius:38px;padding:14px;box-shadow:var(--shadow);
+}
+.screen{
+  background:var(--bg);border-radius:26px;height:700px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.screen[hidden]{display:none}
+.statusbar{height:18px}
+
+.appbar{
+  padding:10px 16px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);background:var(--surface);
+}
+.appbar h2{font-size:15px;margin:0;font-weight:700;color:var(--ink)}
+.appbar .icon-btn{
+  width:28px;height:28px;border-radius:50%;background:var(--surface-soft);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink-soft);
+  border:none;font-family:inherit;cursor:pointer;padding:0;
+}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);
+  background:var(--ink);color:#fff;font-size:12px;font-weight:700;
+  padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;max-width:88%;text-align:center;z-index:80;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- Screen 1: board ---------- */
+.board-scroll{flex:1;overflow-y:auto;padding:12px 10px 20px}
+.col{margin-bottom:16px}
+.col-head{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 8px}
+.col-head span.name{font-size:12px;font-weight:700;color:var(--ink-soft)}
+.col-head span.count{font-size:11px;background:var(--surface-soft);color:var(--ink-soft);border-radius:999px;padding:1px 7px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin:0 4px 8px;position:relative;cursor:pointer;
+}
+.card .row1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card .client{font-weight:700;font-size:13px;color:var(--ink)}
+.card .char{font-size:12px;color:var(--ink-soft);margin-top:1px}
+.card .meta{margin-top:8px}
+.card .dates{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:11px;color:var(--ink-soft)}
+.card .dates .warn{color:var(--danger);font-weight:700}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.chip.quote{background:var(--surface-soft);color:var(--ink-soft)}
+.chip.wait{background:var(--gold-soft);color:var(--gold)}
+.chip.active{background:var(--accent-soft);color:var(--accent)}
+.chip.done{background:var(--green-soft);color:var(--green)}
+.card .next{font-size:11px;color:var(--accent);margin-top:6px;font-weight:600}
+.badge{
+  position:absolute;top:-6px;right:-4px;background:var(--danger);color:#fff;
+  font-size:10px;font-weight:700;border-radius:999px;min-width:16px;height:16px;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+}
+
+/* ---------- Screen 2: detail ---------- */
+.detail-scroll{flex:1;overflow-y:auto;padding:14px 16px 24px}
+.detail-head{margin-bottom:12px}
+.detail-head .name{font-size:17px;font-weight:700;font-family:var(--font-display);color:var(--ink)}
+.detail-head .sub{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--ink-soft);margin-top:4px}
+.status-pill{
+  display:inline-flex;margin-top:8px;font-size:12px;font-weight:700;
+  background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;
+}
+.status-pill.deposit_wait{background:var(--gold-soft);color:var(--gold)}
+.status-pill.shipped{background:var(--green-soft);color:var(--green)}
+
+.stepper{display:flex;align-items:flex-start;margin:4px 2px 2px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto}
+.step .dot{
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:var(--surface-soft);color:var(--ink-soft);
+}
+.step.current .dot{background:var(--accent);color:#fff}
+.step.done .dot{background:var(--accent-soft);color:var(--accent)}
+.step .label{font-size:10px;color:var(--ink-soft);white-space:nowrap}
+.step.current .label{color:var(--ink);font-weight:700}
+.step-line{flex:1 1 auto;height:2px;background:var(--line);margin:10px 2px 0}
+.step-line.done{background:var(--accent)}
+.stepper-note{font-size:10px;color:var(--ink-soft);margin:6px 2px 14px;text-align:center}
+
+.sec{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.sec.current{border-left-color:var(--accent)}
+.sec h3{font-size:12px;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;font-weight:700}
+.refs{display:flex;gap:8px;flex-wrap:wrap}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12px;margin:0}
+.spec-grid dt{color:var(--ink-soft)}
+.spec-grid dd{margin:0;font-weight:600;color:var(--ink)}
+.quote-line{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+.quote-line:last-of-type{border-bottom:none}
+.quote-total{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink)}
+.quote-compact-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--ink)}
+.quote-compact-sub{font-size:11px;color:var(--ink-soft);margin-top:3px}
+.share-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);padding:6px 0;cursor:pointer}
+.toggle{width:30px;height:18px;border-radius:999px;background:var(--accent);position:relative;flex-shrink:0;transition:background .15s}
+.toggle::after{content:"";position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;right:2px;transition:right .15s,left .15s}
+.toggle.off{background:var(--line)}
+.toggle.off::after{right:auto;left:2px}
+.note{font-size:11px;color:var(--ink-soft);background:var(--surface-soft);border-radius:10px;padding:8px 10px;margin-top:8px;line-height:1.6}
+.banner{border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;margin-top:8px}
+.banner.good{background:var(--green-soft);color:var(--green)}
+.btn{
+  display:block;width:100%;text-align:center;font-weight:700;font-size:13px;white-space:nowrap;
+  border-radius:12px;padding:11px 10px;margin-top:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:inherit;cursor:pointer;
+}
+.sec .btn:first-of-type{margin-top:4px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+[data-action]{cursor:pointer}
+
+/* image attachment areas (never shown as real photos) */
+.attach{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:1.5px dashed #c9b8cc;border-radius:12px;background:var(--bg);color:var(--ink-soft);
+  text-align:center;padding:8px;font-size:10px;line-height:1.4;
+}
+.attach svg{width:20px;height:20px;flex-shrink:0}
+.attach b{font-size:11px;color:var(--ink);font-weight:700}
+.attach.thumb{width:64px;height:64px;flex-shrink:0}
+.attach.tile{flex:1 1 0;min-width:0;aspect-ratio:1/1}
+.attach.add{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.attach.big{width:100%;aspect-ratio:4/3;max-width:100%;font-size:12px;padding:12px;margin-bottom:12px}
+.attach.big svg{width:30px;height:30px}
+.attach.big b{font-size:13px}
+.tiles{display:flex;gap:8px}
+
+/* ---------- Screen 3: customer page ---------- */
+.client-scroll{flex:1;overflow-y:auto;padding:16px 16px 24px}
+.client-status{text-align:center;padding:18px 10px;background:var(--accent-soft);border-radius:16px;margin-bottom:12px}
+.client-status .label{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.04em}
+.client-status .headline{font-family:var(--font-display);font-size:16px;line-height:1.6;margin-top:6px;font-weight:600;color:var(--ink)}
+.client-status .sub-note{font-size:11px;color:var(--ink-soft);margin-top:6px}
+.action-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.action-row .btn{margin-top:0}
+.info-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.info-card .k{font-size:11px;color:var(--ink-soft)}
+.info-card .v{font-size:14px;font-weight:700;margin-top:2px;color:var(--ink)}
+.date-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.date-pair .info-card{margin-bottom:10px}
+
+.cap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.cap h4{font-size:12px;margin:0 0 8px;color:var(--ink);font-weight:700}
+.cap-row{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--ink)}
+.cap-row:first-of-type{border-top:none;padding-top:0}
+.cap-row .tag{font-size:10px;font-weight:700;border-radius:999px;padding:2px 8px;height:fit-content;text-align:center;white-space:nowrap}
+.cap-row .tag.see{background:var(--surface-soft);color:var(--ink-soft)}
+.cap-row .tag.act{background:var(--accent-soft);color:var(--accent)}
+.cap-row ul{margin:0;padding-left:14px}
+.inquiry textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px;
+  font-family:inherit;font-size:12px;min-height:72px;background:var(--bg);color:var(--ink);resize:vertical;
+}
+.inquiry .btn{margin-top:8px}
+.policy-link{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);
+  padding:10px 0;border-top:1px solid var(--line);margin-top:6px;
+}
+
+/* ---------- feedback survey ---------- */
+.survey{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:24px 22px;max-height:calc(100vh - 40px);overflow-y:auto}
+.survey-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.survey-head h2{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1.5;margin:0 0 6px;color:var(--ink)}
+.survey-head p{font-size:13px;color:var(--ink-soft);line-height:1.7;margin:0 0 20px}
+.sheet-x{display:none;width:32px;height:32px;border-radius:50%;border:none;background:var(--surface-soft);color:var(--ink-soft);font-size:16px;font-family:inherit;cursor:pointer;flex-shrink:0}
+fieldset.field{border:0;padding:0;margin:0 0 18px;min-width:0}
+fieldset.field legend{padding:0;margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ink)}
+.field{margin-bottom:18px}
+.field .field-label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink)}
+.radio-group{display:flex;flex-direction:column;gap:2px}
+.radio-group label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-weight:400;padding:4px 0}
+.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);resize:vertical;min-height:70px;
+}
+.survey-actions{display:flex;gap:10px}
+.survey-actions .btn{margin-top:0;width:auto;flex:1 1 0}
+.survey-close{display:none}
+.thanks{background:var(--green-soft);color:var(--green);border-radius:18px;padding:20px 22px;font-size:13px;font-weight:600;line-height:1.7}
+.thanks .btn{display:none;margin-top:14px}
+
+.fb-bar,.fb-backdrop{display:none}
+[hidden]{display:none!important}
+
+/* new deal form */
+.nf-field{margin-bottom:14px}
+.nf-field label{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.nf-field label small{font-weight:400;color:var(--ink-soft)}
+.nf-field input,.nf-field select{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:14px;background:var(--surface);color:var(--ink);
+}
+.nf-h{font-size:12px;letter-spacing:.04em;color:var(--accent);margin:18px 0 10px;font-weight:700;padding-top:12px;border-top:1px solid var(--line)}
+.nf-h:first-of-type{border-top:none;padding-top:0;margin-top:4px}
+.nf-h small{font-weight:400;color:var(--ink-soft)}
+.nf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.nf-grid .nf-field{margin-bottom:0}
+.nf-total{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15px;color:var(--ink);background:var(--accent-soft);border-radius:12px;padding:10px 14px;margin-bottom:8px}
+button.attach{font-family:inherit;cursor:pointer}
+.attach.on{border-style:solid;border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.attach.on b{color:var(--green)}
+.nf-lead{font-size:12px;color:var(--ink-soft);line-height:1.7;margin:0 0 14px}
+.form-actions{display:flex;gap:8px;margin-top:6px}
+.form-actions .btn{margin-top:0;flex:1 1 0}
+@keyframes pop{0%{box-shadow:0 0 0 0 rgba(194,63,116,.6)}100%{box-shadow:0 0 0 10px rgba(194,63,116,0)}}
+.card.just-added{border-color:var(--accent);animation:pop 1.2s ease-out 2}
+
+footer.notes{
+  margin-top:28px;font-size:12px;color:var(--page-ink-soft);line-height:1.8;
+  border-top:1px solid var(--page-line);padding-top:16px;max-width:620px;
+}
+
+/* ---------- narrow PC and phones: mobile layout ---------- */
+@media (max-width:920px){
+  body{padding:20px 0 96px}
+  .page{max-width:none}
+  .proto-badges,.masthead,.tabbar,.caption,footer.notes{margin-left:16px;margin-right:16px}
+  .layout{display:block}
+  .mock-col{display:block}
+  .mock-wrap{width:100%}
+  .tabbar{gap:5px;margin-top:16px}
+  .tabbar button{font-size:11px;padding:8px 4px;letter-spacing:0}
+  .caption{margin-bottom:12px;padding:12px 14px}
+
+  .phone{border:0;border-radius:0;padding:0;box-shadow:none;background:transparent}
+  .statusbar{display:none}
+  .screen{height:auto;min-height:calc(100vh - 260px);border-radius:0;overflow:visible}
+  .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+  .board-scroll,.detail-scroll,.client-scroll{overflow:visible}
+  .btn{font-size:12px;padding:9px 8px}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+
+  .feedback-col{position:static}
+  .fb-bar{
+    display:block;position:fixed;left:0;right:0;bottom:0;z-index:40;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--page-bg);border-top:1px solid var(--page-line);
+  }
+  .fb-bar button{
+    display:block;width:100%;margin:0;border-radius:999px;padding:13px 10px;font-size:14px;
+    border:0;background:var(--accent);color:#fff;font-weight:700;font-family:inherit;white-space:nowrap;cursor:pointer;
+  }
+  .fb-backdrop{display:block;position:fixed;inset:0;z-index:50;background:rgba(10,6,16,.6);opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+  .fb-backdrop.open{opacity:1;visibility:visible;transition:opacity .2s}
+  .survey{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;max-height:88vh;max-height:88dvh;
+    border-radius:22px 22px 0 0;padding:20px 16px 0;
+    transform:translateY(100%);visibility:hidden;
+    transition:transform .25s ease,visibility 0s .25s;
+  }
+  .survey.open{transform:translateY(0);visibility:visible;transition:transform .25s ease}
+  .sheet-x{display:block}
+  .survey-actions{
+    position:sticky;bottom:0;background:var(--surface);
+    padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);margin-top:4px;
+  }
+  .survey-close{display:block}
+  .thanks .btn{display:block}
+  .survey .thanks{margin-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+  .survey,.fb-backdrop,.toast{transition:none!important}
+}
+</style>
+
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+@media (max-width:920px){.nf-field input,.nf-field select{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="proto-badges">
+    <span>フィードバックはアカウント登録不要</span>
+    <span>データは保存されません</span>
+  </div>
+
+  <div class="masthead">
+    <h1>WigFlowプロトタイプ</h1>
+    <p class="lead">参考資料・仕様・見積もり・制作進捗・完成確認・発送まで。</p>
+    <p>Excelや自作フォーム、DMなどに分散しがちな案件情報を、受付から納品まで一か所で管理するためのツールです。</p>
+    <p>仕様や金額、進捗状況をお客様と共有することで、認識違いや確認漏れによるトラブルを減らし、安心して制作を進められることを目指しています。</p>
+    <p>制作者用の案件管理画面と、お客様用の確認ページを実際に操作できます。</p>
+    <p><span class="hl">1〜2分ほど操作して、最後に30秒のフィードバックをお願いします。</span></p>
+    <p class="small">※表示されている依頼者名・キャラクター名・金額などは、すべて架空のデモデータです。<br>※これはApp Store等で提供中のアプリではなく、構想段階の操作可能なプロトタイプです。</p>
+  </div>
+
+  <div class="layout">
+    <div class="mock-col">
+      <div class="mock-wrap">
+        <div class="tabbar" role="tablist">
+          <button role="tab" aria-selected="true" data-target="board">① 案件ボード</button>
+          <button role="tab" aria-selected="false" data-target="detail">② 案件詳細</button>
+          <button role="tab" aria-selected="false" data-target="client">③ お客様ページ</button>
+        </div>
+
+        <div class="caption" id="caption-box"></div>
+
+        <div class="phone">
+          <div class="statusbar"></div>
+
+          <div class="screen" id="screen-board">
+            <div class="appbar">
+              <h2>案件ボード</h2>
+              <button class="icon-btn" id="add-btn" type="button" aria-label="新規案件を追加">＋</button>
+            </div>
+            <div class="board-scroll" id="board-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-detail" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="detail-back" type="button" aria-label="案件ボードへ戻る">‹</button>
+              <h2>案件詳細</h2>
+              <div class="icon-btn" style="opacity:.35">⋯</div>
+            </div>
+            <div class="detail-scroll" id="detail-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-client" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="client-back" type="button" aria-label="案件ボードへ戻る">‹</button>
+              <h2>ご依頼の進捗</h2>
+              <div class="icon-btn" style="opacity:.35">？</div>
+            </div>
+            <div class="client-scroll" id="client-scroll"></div>
+          </div>
+
+          <div class="screen" id="screen-new" hidden>
+            <div class="appbar">
+              <button class="icon-btn" id="new-back" type="button" aria-label="キャンセルしてボードへ戻る">‹</button>
+              <h2>新規案件</h2>
+              <div class="icon-btn" style="opacity:0" aria-hidden="true">⋯</div>
+            </div>
+            <form class="detail-scroll" id="new-form">
+              <p class="nf-lead">案件カード・仕様・見積に使う項目を入力してください。保存すると案件ボードに追加されます（ページを再読み込みするまで表示されます）。</p>
+              <h3 class="nf-h">基本情報</h3>
+              <div class="nf-field">
+                <label for="nf-character">案件名</label>
+                <input id="nf-character" type="text" required maxlength="40" placeholder="例：深海トウカ（オリジナル創作）">
+              </div>
+              <div class="nf-field">
+                <label for="nf-client">顧客名</label>
+                <input id="nf-client" type="text" required maxlength="30" placeholder="例：佐伯ひまり">
+              </div>
+              <div class="nf-field">
+                <label for="nf-wear">着用予定日</label>
+                <input id="nf-wear" type="date" required>
+              </div>
+              <div class="nf-field">
+                <label for="nf-delivery">納品日 <small>（任意）</small></label>
+                <input id="nf-delivery" type="date">
+              </div>
+              <div class="nf-field">
+                <label for="nf-status">ステータス</label>
+                <select id="nf-status"></select>
+              </div>
+
+              <h3 class="nf-h">ウィッグ仕様 <small>（任意）</small></h3>
+              <div class="nf-grid" id="nf-specs"></div>
+              <div class="note" style="margin:0 0 16px">本番では、メーカー・色などの仕様項目を任意で追加できる予定です。このプロトタイプでは、用意した項目への入力のみできます。</div>
+
+              <h3 class="nf-h">見積（金額） <small>（任意）</small></h3>
+              <div class="nf-grid" id="nf-costs"></div>
+              <div class="nf-total"><span>合計（自動計算）</span><span id="nf-total">¥0</span></div>
+              <div class="note" style="margin:0 0 16px">金額を入力すると、合計が自動で計算されます。本番では、材料費・送料などの項目も任意で追加できる予定です。</div>
+
+              <h3 class="nf-h">参考資料（写真） <small>（ダミー）</small></h3>
+              <div class="tiles" id="nf-photos"></div>
+              <div class="note" style="margin:8px 0 16px">タップすると添付済みの表示になります（もう一度タップで解除）。このプロトタイプでは、実際の画像は保存されません。</div>
+
+              <div class="form-actions">
+                <button class="btn" id="new-cancel" type="button">キャンセル</button>
+                <button class="btn primary" type="submit">保存する</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="feedback-col">
+      <section class="survey" id="survey" aria-label="フィードバック">
+        <div class="survey-top">
+          <div class="survey-head">
+            <h2>実際の依頼管理に使えそうですか？</h2>
+            <p>プロトタイプを操作した感想を教えてください。（約30秒）</p>
+          </div>
+          <button class="sheet-x" type="button" id="sheet-x" aria-label="閉じる">✕</button>
+        </div>
+
+        <form id="survey-form">
+          <fieldset class="field">
+            <legend>Q1. このツールは、今の依頼管理より便利になりそうですか？</legend>
+            <div class="radio-group">
+              <label><input type="radio" name="q1" value="かなり便利になりそう" required> かなり便利になりそう</label>
+              <label><input type="radio" name="q1" value="少し便利になりそう" required> 少し便利になりそう</label>
+              <label><input type="radio" name="q1" value="あまり変わらなそう" required> あまり変わらなそう</label>
+              <label><input type="radio" name="q1" value="今より不便になりそう" required> 今より不便になりそう</label>
+              <label><input type="radio" name="q1" value="まだ判断できない" required> まだ判断できない</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field" id="q2-group">
+            <legend>Q2. どの機能が、特に役立ちそうだと感じましたか？（複数選択可）</legend>
+            <div class="radio-group">
+              <label><input type="checkbox" name="q2" value="案件ごとに依頼情報をまとめて管理"> 案件ごとに依頼情報をまとめて管理</label>
+              <label><input type="checkbox" name="q2" value="参考資料・ウィッグ仕様の整理"> 参考資料・ウィッグ仕様の整理</label>
+              <label><input type="checkbox" name="q2" value="見積もり・金額の管理"> 見積もり・金額の管理</label>
+              <label><input type="checkbox" name="q2" value="お客様への制作進捗の共有"> お客様への制作進捗の共有</label>
+              <label><input type="checkbox" name="q2" value="完成品の確認・修正依頼"> 完成品の確認・修正依頼</label>
+              <label><input type="checkbox" name="q2" value="発送状況の管理"> 発送状況の管理</label>
+              <label><input type="checkbox" name="q2" value="特にない"> 特にない</label>
+              <label><input type="checkbox" name="q2" value="その他"> その他</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Q3. 実際の依頼で、このようなツールを使ってみたいと思いますか？</legend>
+            <div class="radio-group">
+              <label><input type="radio" name="q3" value="ぜひ使ってみたい" required> ぜひ使ってみたい</label>
+              <label><input type="radio" name="q3" value="条件が合えば使ってみたい" required> 条件が合えば使ってみたい</label>
+              <label><input type="radio" name="q3" value="どちらとも言えない" required> どちらとも言えない</label>
+              <label><input type="radio" name="q3" value="あまり使いたいと思わない" required> あまり使いたいと思わない</label>
+              <label><input type="radio" name="q3" value="使いたいと思わない" required> 使いたいと思わない</label>
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <label for="q4" class="field-label">Q4. 今の依頼管理で、特に面倒・不安に感じることは何ですか？（任意）</label>
+            <textarea id="q4" name="q4" placeholder="例：見積もりや写真がDMに埋もれる、仕様の伝え間違い、進捗確認への返信など"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="q5" class="field-label">Q5. 実際に使うとしたら、足りない機能や気になる点はありますか？（任意）</label>
+            <textarea id="q5" name="q5" placeholder="例：入力項目が多い、スマホで操作しにくい、お客様がページを開いてくれるか不安など"></textarea>
+          </div>
+
+          <div class="survey-actions">
+            <button type="button" class="btn survey-close" id="survey-close">閉じる</button>
+            <button type="submit" class="btn primary" id="survey-submit">送信する</button>
+          </div>
+        </form>
+        <div class="thanks" id="survey-thanks" hidden>
+          ご協力ありがとうございました。
+          <button type="button" class="btn" id="thanks-close">閉じる</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+</div>
+
+<div class="fb-bar"><button type="button" id="fb-open" aria-haspopup="dialog" aria-expanded="false" aria-controls="survey">フィードバックを送る</button></div>
+<div class="fb-backdrop" id="fb-backdrop"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+
+  var STATUS_ORDER = ['quote','deposit_wait','in_progress','confirm_wait','shipped'];
+  var statusLabel = {
+    quote:'見積作成中', deposit_wait:'入金待ち', in_progress:'制作中',
+    confirm_wait:'完成確認待ち', shipped:'発送済み'
+  };
+  var nextLabelMap = {
+    quote:'入金待ちへ進める', deposit_wait:'制作中へ進める',
+    in_progress:'完成確認待ちへ進める', confirm_wait:'発送済みへ進める'
+  };
+  var chipClassMap = {
+    quote:'quote', deposit_wait:'wait', in_progress:'active',
+    confirm_wait:'active', shipped:'done'
+  };
+  var stepperNodes = [
+    ['quote','見積'], ['deposit_wait','入金'], ['in_progress','制作'],
+    ['confirm_wait','確認'], ['shipped','発送']
+  ];
+  var fallbackTracking = {
+    saeki:'ヤマト運輸 5521-7788-010',
+    takase:'佐川急便 3301-442-988',
+    yukishiro:'ヤマト運輸 9087-1123-455',
+    sarah:'ヤマト運輸 6140-2285-731'
+  };
+
+  var deals = [
+    { id:'saeki', client:'佐伯ひまり', character:'深海トウカ（オリジナル創作）', status:'quote',
+      received:'12/02', wearDate:'12/20', deliveryDate:'12/15',
+      refs:['正面','側面','資料'],
+      specs:[['メーカー','自作ベース'],['色','ディープブルー→ブラック'],['長さ','ミディアム(45cm)'],['前髪','ぱっつん'],['分け目','なし'],['生え際','ノーマル']],
+      quote:[['本体代',9000],['制作費',10000],['特殊加工（メッシュ入れ）',2500],['送料',1200]],
+      quoteApprovedByClient:false, archived:false },
+
+    { id:'takase', client:'高瀬みお', character:'氷織シズク（オリジナル創作）', status:'deposit_wait',
+      received:'11/20', wearDate:'12/14', deliveryDate:'12/09',
+      refs:['正面','側面'],
+      specs:[['メーカー','スイートラブリー'],['色','アイスブルー'],['長さ','ロング(70cm)'],['前髪','なし'],['分け目','7:3'],['生え際','ノーマル']],
+      quote:[['本体代',11000],['制作費',6000],['送料',1000]],
+      approvedDate:'11/25',
+      paymentReportedByClient:true, archived:false },
+
+    { id:'yukishiro', client:'雪城れん', character:'紅葉カエデ（オリジナル創作）', status:'in_progress',
+      received:'11/05', wearDate:'11/30', deliveryDate:'11/25', warn:true, deadlineNote:'残り5日',
+      refs:['正面','側面','資料'],
+      specs:[['メーカー','キャラウィッグ専門店'],['色','オータムレッド'],['長さ','ロング(75cm)'],['前髪','シースルー'],['分け目','センター'],['生え際','レース仕上げ']],
+      quote:[['本体代',13000],['制作費',9000],['特殊加工（三つ編み）',2000],['送料',1200]],
+      approvedDate:'11/08',
+      progressNote:'植毛・カット調整が完了。次はレース生え際の仕上げに入ります。',
+      progressPhotos:2, archived:false },
+
+    { id:'sarah', client:'サラ', character:'フリーレン（コスプレウィッグ）', status:'confirm_wait',
+      received:'10/01', wearDate:'10/28', deliveryDate:'10/23',
+      refs:['正面','側面','背面'],
+      specs:[['メーカー','ノーブランド(自作)'],['色','アッシュブロンド→ホワイトのグラデーション'],['長さ','ロング(85cm)'],['前髪','センター分け・ぱっつん'],['分け目','センター'],['生え際','レース仕上げ']],
+      quote:[['本体代',12000],['制作費',9000],['特殊加工（カラーブレンド）',3500],['送料',1500]],
+      approvedDate:'10/10',
+      share:{final:true, progress:true}, shareActive:true,
+      clientConfirmed:false, archived:false },
+
+    { id:'miyashita', client:'宮下ことね', character:'薊野アザミ（オリジナル創作）', status:'shipped',
+      received:'10/15', wearDate:'11/25', deliveryDate:'11/18',
+      refs:['正面','側面'],
+      specs:[['メーカー','ノーブランド'],['色','アッシュグレー'],['長さ','ミディアム(50cm)'],['前髪','あり'],['分け目','センター'],['生え際','ノーマル']],
+      quote:[['本体代',10000],['制作費',7000],['送料',1200]],
+      approvedDate:'10/20',
+      tracking:'ヤマト運輸 4821-0093-556',
+      clientReportedArrival:false, archived:false }
+  ];
+
+  var currentDealId = 'sarah';
+
+  function findDeal(id){
+    for(var i=0;i<deals.length;i++){ if(deals[i].id===id) return deals[i]; }
+    return null;
+  }
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function nb(s){ return '<span class="nb">'+s+'</span>'; }
+  function nbJoin(arr){ return arr.map(nb).join(''); }
+
+  function money(amount){ return '¥'+amount.toLocaleString('ja-JP'); }
+  function quoteTotal(d){
+    var sum = 0;
+    for(var i=0;i<d.quote.length;i++) sum += d.quote[i][1];
+    return sum;
+  }
+  function quoteLinesHTML(lines, total){
+    var html = '';
+    for(var i=0;i<lines.length;i++){
+      html += '<div class="quote-line"><span>'+lines[i][0]+'</span><span>'+money(lines[i][1])+'</span></div>';
+    }
+    if(!lines.length) html += '<div class="note" style="margin:0 0 6px">見積項目はまだ入力されていません。</div>';
+    html += '<div class="quote-total"><span>合計</span><span>'+money(total)+'</span></div>';
+    return html;
+  }
+
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
+
+  function refsHTML(refs){
+    var thumbs = '';
+    for(var i=0;i<refs.length;i++){
+      thumbs += '<div class="attach thumb">'+ICON+'<b>'+refs[i]+'</b></div>';
+    }
+    if(!refs.length) thumbs = '<div class="attach thumb add"><b>＋ 追加</b><span>画像を添付</span></div>';
+    return '<div class="sec"><h3>参考資料（添付画像）</h3><div class="refs">'+thumbs+'</div>'+
+      '<div class="note">依頼者から受け取った画像がここに添付されます。</div></div>';
+  }
+  function specsHTML(specs){
+    var rows = '';
+    for(var i=0;i<specs.length;i++){ rows += '<dt>'+specs[i][0]+'</dt><dd>'+specs[i][1]+'</dd>'; }
+    return '<div class="sec"><h3>ウィッグ仕様</h3><dl class="spec-grid">'+rows+'</dl></div>';
+  }
+
+  function stepperHTML(status){
+    var idx = STATUS_ORDER.indexOf(status);
+    var row = '';
+    for(var i=0;i<stepperNodes.length;i++){
+      var label = stepperNodes[i][1];
+      var state = i<idx ? 'done' : (i===idx ? 'current' : 'upcoming');
+      row += '<div class="step '+state+'"><span class="dot">'+(state==='done' ? '✓' : (i+1))+'</span><span class="label">'+label+'</span></div>';
+      if(i < stepperNodes.length-1){
+        row += '<span class="step-line '+(i<idx ? 'done' : '')+'"></span>';
+      }
+    }
+    return '<div class="stepper">'+row+'</div><div class="stepper-note">参考資料・仕様は、この見積の土台になっています</div>';
+  }
+
+  /* what the customer can see / do at each step */
+  function capability(d){
+    var dates = '着用予定日・納品日';
+    if(d.archived) return { see:['依頼の内容（完了済み）'], act:['なし'] };
+    if(d.status==='quote'){
+      return {
+        see:['見積の金額と内訳','ウィッグの仕様・参考資料',dates],
+        act: d.quoteApprovedByClient
+          ? ['なし（制作者からの連絡待ち）','ご質問・ご連絡の送信']
+          : ['この内容で承認する','見積の修正をお願いする','ご質問・ご連絡の送信']
+      };
+    }
+    if(d.status==='deposit_wait'){
+      return {
+        see:['お支払い金額','お振込先',dates],
+        act: d.paymentReportedByClient
+          ? ['なし（入金確認待ち）','ご質問・ご連絡の送信']
+          : ['お支払い完了を報告する','ご質問・ご連絡の送信']
+      };
+    }
+    if(d.status==='in_progress'){
+      return {
+        see:['制作の進捗コメント','共有された工程写真',dates],
+        act:['ご質問・ご連絡の送信（承認済みの見積は変更できません）']
+      };
+    }
+    if(d.status==='confirm_wait'){
+      return {
+        see:['完成写真（共有された場合）','承認済みの見積','発送予定',dates],
+        act:['軽微な修正をお願いする','確認済みにする（発送へ進みます）','ご質問・ご連絡の送信']
+      };
+    }
+    return {
+      see:['配送業者・追跡番号',dates],
+      act: d.clientReportedArrival
+        ? ['なし（到着報告済み）','ご質問・ご連絡の送信']
+        : ['到着を報告する','ご質問・ご連絡の送信']
+    };
+  }
+  function listHTML(items){
+    return '<ul>'+items.map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul>';
+  }
+  function capHTML(d, title){
+    var c = capability(d);
+    return '<div class="cap"><h4>'+title+'</h4>'+
+      '<div class="cap-row"><span class="tag see">確認できる</span><div>'+listHTML(c.see)+'</div></div>'+
+      '<div class="cap-row"><span class="tag act">操作できる</span><div>'+listHTML(c.act)+'</div></div></div>';
+  }
+
+  function attachTilesHTML(n, label, withAdd){
+    var html = '<div class="tiles">';
+    for(var i=0;i<n;i++){
+      html += '<div class="attach tile">'+ICON+'<b>'+label+' '+(i+1)+'</b><span>画像添付エリア</span></div>';
+    }
+    if(withAdd) html += '<div class="attach tile add"><b>＋ 追加</b><span>画像を添付</span></div>';
+    return html+'</div>';
+  }
+
+  function quoteFullSectionHTML(d, total){
+    var note = d.quoteApprovedByClient
+      ? '<div class="banner good">✅ お客様が見積を承認しました</div>'
+      : '<div class="note">お客様ページで内容を確認・承認いただけます。</div>';
+    return '<div class="sec current"><h3>見積（作成中）</h3>'+quoteLinesHTML(d.quote,total)+note+'</div>';
+  }
+  function quoteCompactSectionHTML(d, total){
+    return '<div class="sec"><h3>見積</h3>'+
+      '<div class="quote-compact-row"><span>合計</span><span>'+money(total)+'</span></div>'+
+      '<div class="quote-compact-sub">承認済み'+(d.approvedDate ? '・'+d.approvedDate : '')+'</div></div>';
+  }
+
+  function stageSectionHTML(d){
+    if(d.status==='deposit_wait'){
+      var payNote = d.paymentReportedByClient
+        ? '<div class="banner good">✅ お客様からお支払い報告がありました</div>'
+        : '<div class="note">お支払いを確認したら、下のボタンで次に進めます。</div>';
+      return '<div class="sec current"><h3>お支払い</h3>'+
+        '<div class="info-card"><div class="k">お支払い方法</div><div class="v">銀行振込（〇〇銀行 △△支店 普通1234567）</div></div>'+
+        payNote+'</div>';
+    }
+    if(d.status==='in_progress'){
+      return '<div class="sec current"><h3>制作状況</h3>'+
+        '<div class="note" style="margin-top:0">'+(d.progressNote || '制作中です。')+'</div>'+
+        '<div style="margin-top:10px;font-size:11px;color:var(--ink-soft)">工程写真（添付済み '+(d.progressPhotos||0)+'枚）</div>'+
+        '<div style="margin-top:6px">'+attachTilesHTML(d.progressPhotos||0,'工程写真',true)+'</div></div>';
+    }
+    if(d.status==='confirm_wait'){
+      var shareBtns = d.shareActive
+        ? '<button class="btn primary" data-action="copy-link" type="button">共有リンクをコピー</button><button class="btn" data-action="toggle-link-active" type="button">共有リンクを無効化する</button>'
+        : '<button class="btn" data-action="toggle-link-active" type="button">共有リンクを再発行する</button>';
+      return '<div class="sec current"><h3>お客様への共有</h3>'+
+        '<div class="share-row" data-action="toggle-final"><div class="toggle '+(d.share.final?'':'off')+'"></div> 完成写真を共有する</div>'+
+        '<div class="share-row" data-action="toggle-progress"><div class="toggle '+(d.share.progress?'':'off')+'"></div> 工程写真を共有する</div>'+
+        '<div class="note">原価・内部メモ・他の依頼の情報はお客様ページに表示されません。</div>'+
+        shareBtns+'</div>';
+    }
+    if(d.status==='shipped'){
+      var arrNote = d.clientReportedArrival
+        ? '<div class="banner good" style="margin-top:8px">✅ お客様が到着を報告しました</div>'
+        : '<div class="note" style="margin-top:8px">お客様からの到着報告をお待ちください。</div>';
+      return '<div class="sec current"><h3>発送情報</h3>'+
+        '<div class="info-card"><div class="k">配送業者・追跡番号</div><div class="v">'+d.tracking+'</div></div>'+
+        arrNote+'</div>';
+    }
+    return '';
+  }
+
+  function footerButtonsHTML(d){
+    var html = '<div class="sec">';
+    if(d.status!=='shipped'){
+      html += '<button class="btn primary" data-action="advance" type="button">'+nextLabelMap[d.status]+'</button>';
+    } else if(!d.archived){
+      html += '<button class="btn primary" data-action="archive" type="button">この依頼を完了にする</button>';
+    }
+    html += '<button class="btn" data-action="preview-client" type="button">お客様ページを見る</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function buildDetailHTML(d){
+    var total = quoteTotal(d);
+    var html = '<div class="detail-head">'+
+      '<div class="name">'+esc(d.client)+' 様 ／ '+esc(d.character)+'</div>'+
+      '<div class="sub">'+nb('受付日 '+d.received)+nb('着用予定日 '+d.wearDate)+nb('納品日 '+d.deliveryDate)+'</div>'+
+      '<span class="status-pill '+d.status+'">'+statusLabel[d.status]+'</span>'+
+    '</div>';
+    html += stepperHTML(d.status);
+    html += refsHTML(d.refs);
+    html += specsHTML(d.specs);
+    html += (d.status==='quote') ? quoteFullSectionHTML(d,total) : quoteCompactSectionHTML(d,total);
+    html += stageSectionHTML(d);
+    html += capHTML(d, 'この段階でお客様ができること');
+    html += footerButtonsHTML(d);
+    return html;
+  }
+
+  function buildPolicyLinkHTML(){
+    return '<div class="policy-link"><span>'+nb('ご利用にあたって')+nb('（修正・キャンセル・配送について）')+'</span> <span>›</span></div>';
+  }
+
+  function buildClientHTML(d){
+    var headline;
+    if(d.archived){
+      headline = ['ご対応ありがとうございました。','この依頼は完了しています。'];
+    } else if(d.status==='quote'){
+      headline = d.quoteApprovedByClient ? ['承認ありがとうございます。','制作者からのご連絡を','お待ちください。'] : ['お見積りを','ご確認ください'];
+    } else if(d.status==='deposit_wait'){
+      headline = d.paymentReportedByClient ? ['ご連絡ありがとうございます。','確認までお待ちください。'] : ['お支払いを','お願いします'];
+    } else if(d.status==='in_progress'){
+      headline = ['制作中です。','進捗をお届けします。'];
+    } else if(d.status==='confirm_wait'){
+      headline = ['完成しました。','ご確認ください'];
+    } else if(d.status==='shipped'){
+      headline = d.clientReportedArrival ? ['ご報告ありがとうございます。'] : ['発送しました'];
+    }
+
+    var html = '<div class="client-status">'+
+      '<div class="label">'+esc(d.character)+'</div>'+
+      '<div class="headline">'+nbJoin(headline)+'</div>'+
+      '<div class="sub-note">内部の原価や他の依頼の情報は含まれません。</div>'+
+    '</div>';
+
+    if(d.archived){ return html + buildPolicyLinkHTML(); }
+
+    var total = quoteTotal(d);
+
+    html += capHTML(d, 'いまの段階でできること');
+
+    html += '<div class="date-pair">'+
+      '<div class="info-card"><div class="k">着用予定日</div><div class="v">'+d.wearDate+'</div></div>'+
+      '<div class="info-card"><div class="k">納品日</div><div class="v">'+d.deliveryDate+'</div></div>'+
+    '</div>';
+
+    if(d.status==='confirm_wait'){
+      html += (d.share && d.share.final)
+        ? '<div class="attach big">'+ICON+'<b>完成写真の添付エリア</b><span>制作者が添付した完成写真がここに表示されます</span></div>'
+        : '<div class="attach big">'+ICON+'<b>まだ共有されていません</b><span>制作者が共有すると、ここに完成写真が表示されます</span></div>';
+    }
+
+    if(d.status==='quote'){
+      html += '<div class="info-card"><div class="k">お見積り</div>'+quoteLinesHTML(d.quote,total)+'</div>';
+      if(!d.quoteApprovedByClient){
+        html += '<div class="action-row">'+
+          '<button class="btn primary" data-action="approve-quote" type="button">この内容で承認する</button>'+
+          '<button class="btn" data-action="open-revision" data-tag="【見積の修正依頼】" type="button">見積の修正をお願いする</button>'+
+        '</div>';
+      }
+    } else if(d.status==='deposit_wait'){
+      html += '<div class="info-card"><div class="k">お支払い金額</div><div class="v">'+money(total)+'</div></div>'+
+        '<div class="info-card"><div class="k">お振込先</div><div class="v">〇〇銀行 △△支店 普通1234567</div></div>';
+      if(!d.paymentReportedByClient){
+        html += '<div class="action-row"><button class="btn primary" data-action="report-payment" type="button">お支払いしました、と伝える</button></div>';
+      }
+    } else if(d.status==='in_progress'){
+      html += '<div class="info-card"><div class="k">共有された工程写真（'+(d.progressPhotos||0)+'枚）</div>'+
+        '<div style="margin-top:8px">'+attachTilesHTML(d.progressPhotos||0,'工程写真',false)+'</div>'+
+        '<div class="note">実際の画面では、制作者が添付した工程写真がここに表示されます。</div></div>';
+    } else if(d.status==='confirm_wait'){
+      html += '<div class="action-row">'+
+        '<button class="btn primary" data-action="confirm-complete" type="button">確認済みにする</button>'+
+        '<button class="btn" data-action="open-revision" data-tag="【軽微な修正依頼】" type="button">軽微修正をお願いする</button>'+
+      '</div>'+
+      '<div class="info-card"><div class="k">お見積り（承認済み）</div><div class="v">'+money(total)+'</div></div>'+
+      '<div class="info-card"><div class="k">発送予定</div><div class="v">完成確認後、3日以内に発送予定</div></div>';
+    } else if(d.status==='shipped'){
+      html += '<div class="info-card"><div class="k">配送業者・追跡番号</div><div class="v">'+(d.tracking || '手配中')+'</div></div>';
+      if(!d.clientReportedArrival){
+        html += '<div class="action-row"><button class="btn primary" data-action="report-arrival" type="button">到着しました、と伝える</button></div>';
+      }
+    }
+
+    html += '<div class="info-card inquiry"><div class="k" style="font-weight:700;color:var(--ink)">ご質問・ご連絡</div>'+
+      '<textarea id="inq-text" placeholder="ご質問や制作者へのご連絡をご記入ください"></textarea>'+
+      '<button class="btn primary" data-action="send-inquiry" type="button">送信する</button></div>';
+
+    html += buildPolicyLinkHTML();
+    return html;
+  }
+
+  function advanceDeal(d){
+    var idx = STATUS_ORDER.indexOf(d.status);
+    if(idx<0 || idx>=STATUS_ORDER.length-1) return;
+    d.status = STATUS_ORDER[idx+1];
+    if(d.status==='confirm_wait'){
+      if(!d.share) d.share = {final:true, progress:true};
+      if(d.shareActive===undefined) d.shareActive = true;
+      if(!d.approvedDate) d.approvedDate = '—';
+    }
+    if(d.status==='shipped'){
+      if(!d.tracking) d.tracking = fallbackTracking[d.id] || '手配中';
+    }
+  }
+
+  function needsAttention(d){
+    if(d.status==='quote') return !!d.quoteApprovedByClient;
+    if(d.status==='deposit_wait') return !!d.paymentReportedByClient;
+    if(d.status==='shipped') return !!d.clientReportedArrival;
+    return false;
+  }
+  function nextText(d){
+    if(d.status==='quote') return d.quoteApprovedByClient ? '入金待ちへ進める（承認済み）' : '見積を確認・送付する';
+    if(d.status==='deposit_wait') return d.paymentReportedByClient ? '入金を確認して制作中へ進める' : '入金確認のリマインドを送る';
+    if(d.status==='in_progress') return '工程写真を追加する';
+    if(d.status==='confirm_wait') return '完成写真の確認依頼を送る';
+    if(d.status==='shipped') return d.clientReportedArrival ? '到着報告を確認する' : '到着確認を待つ';
+    return '';
+  }
+
+  function cardHTML(d){
+    var chipClass = chipClassMap[d.status];
+    var warn = d.warn ? ' class="warn"' : '';
+    var dateLine = nb('着用予定日 '+d.wearDate)+
+      '<span class="nb"'+warn+'>納品日 '+d.deliveryDate+(d.deadlineNote ? '・'+d.deadlineNote : '')+'</span>';
+    var badge = needsAttention(d) ? '<div class="badge">1</div>' : '';
+    return '<div class="card" data-id="'+d.id+'">'+badge+
+      '<div class="row1"><span class="client">'+esc(d.client)+'</span><span class="chip '+chipClass+'">'+statusLabel[d.status]+'</span></div>'+
+      '<div class="char">'+esc(d.character)+'</div>'+
+      '<div class="meta"><div class="dates">'+dateLine+'</div></div>'+
+      '<div class="next">次：'+nextText(d)+'</div>'+
+    '</div>';
+  }
+  function renderColumn(statusKey){
+    var list = [];
+    for(var i=0;i<deals.length;i++){
+      if(deals[i].status===statusKey && !deals[i].archived) list.push(deals[i]);
+    }
+    var cardsHTML = list.length ? list.map(cardHTML).join('') : '<div class="note" style="margin:0 4px 8px">現在はありません</div>';
+    return '<div class="col"><div class="col-head"><span class="name">'+statusLabel[statusKey]+'</span><span class="count">'+list.length+'</span></div>'+cardsHTML+'</div>';
+  }
+
+  var boardScroll = document.getElementById('board-scroll');
+  var detailScroll = document.getElementById('detail-scroll');
+  var clientScroll = document.getElementById('client-scroll');
+  var toastEl = document.getElementById('toast');
+  var captionBox = document.getElementById('caption-box');
+  var tabs = document.querySelectorAll('.tabbar button');
+  var screens = {
+    board: document.getElementById('screen-board'),
+    detail: document.getElementById('screen-detail'),
+    client: document.getElementById('screen-client'),
+    new: document.getElementById('screen-new')
+  };
+
+  var captions = {
+    board: { title:'① 制作者の案件ボード', body:'依頼ごとの状態と、着用予定日・納品日を一覧で確認。カードをタップすると、その依頼の参考資料・見積・進捗までまとめて開きます。' },
+    detail: { title:'② 案件詳細', body:'参考資料・仕様・見積・制作状況・完成確認・発送を1つの依頼ごとにつなげて管理。ボタンを押すと次の工程に進み、ボードの列も連動します。段階ごとに、お客様が確認・操作できる内容も確認できます。' },
+    client: { title:'③ お客様ページ', body:'依頼者には「今の状況」「確認できること・操作できること」「完成写真」「発送情報」だけを共有。質問欄は最初から使えます。内部メモや他の依頼の情報は表示されません。' }
+  };
+  function updateCaption(key){
+    var c = captions[key];
+    captionBox.innerHTML = '<strong>'+c.title+'</strong>'+c.body;
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+
+  function renderBoard(){ boardScroll.innerHTML = STATUS_ORDER.map(renderColumn).join(''); }
+  function renderDetail(id){
+    currentDealId = id;
+    var d = findDeal(id);
+    if(!d) return;
+    detailScroll.innerHTML = buildDetailHTML(d);
+  }
+  function renderClient(id){
+    currentDealId = id;
+    var d = findDeal(id);
+    if(!d) return;
+    var prev = document.getElementById('inq-text');
+    var keep = prev ? prev.value : '';
+    clientScroll.innerHTML = buildClientHTML(d);
+    var now = document.getElementById('inq-text');
+    if(now && keep) now.value = keep;
+  }
+
+  function selectTab(key){
+    var tabKey = (key==='new') ? 'board' : key;
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', t.dataset.target===tabKey ? 'true' : 'false'); });
+    Object.keys(screens).forEach(function(k){ screens[k].hidden = (k!==key); });
+    updateCaption(tabKey);
+    if(key==='new') resetNewForm();
+    else if(key==='board') renderBoard();
+    else if(key==='detail') renderDetail(currentDealId);
+    else if(key==='client') renderClient(currentDealId);
+  }
+  function openDetail(id){ currentDealId = id; selectTab('detail'); }
+  function openClient(id){ currentDealId = id; selectTab('client'); }
+  function goBoard(){ selectTab('board'); }
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){ selectTab(tab.dataset.target); });
+  });
+  document.getElementById('detail-back').addEventListener('click', goBoard);
+  document.getElementById('client-back').addEventListener('click', goBoard);
+
+  boardScroll.addEventListener('click', function(e){
+    var card = e.target.closest('.card[data-id]');
+    if(card) openDetail(card.getAttribute('data-id'));
+  });
+
+  detailScroll.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var d = findDeal(currentDealId);
+    if(!d) return;
+    var action = el.getAttribute('data-action');
+    if(action==='advance'){
+      advanceDeal(d); toast('ステータスを「'+statusLabel[d.status]+'」に進めました'); renderDetail(d.id);
+    } else if(action==='preview-client'){
+      openClient(d.id);
+    } else if(action==='toggle-final'){
+      d.share.final = !d.share.final; renderDetail(d.id);
+    } else if(action==='toggle-progress'){
+      d.share.progress = !d.share.progress; renderDetail(d.id);
+    } else if(action==='copy-link'){
+      if(d.shareActive){ toast('共有リンクをコピーしました'); }
+    } else if(action==='toggle-link-active'){
+      d.shareActive = !d.shareActive;
+      toast(d.shareActive ? '共有リンクを再発行しました' : '共有リンクを無効化しました');
+      renderDetail(d.id);
+    } else if(action==='archive'){
+      d.archived = true; toast('依頼を完了としてアーカイブしました'); goBoard();
+    }
+  });
+
+  clientScroll.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var d = findDeal(currentDealId);
+    if(!d) return;
+    var action = el.getAttribute('data-action');
+    if(action==='approve-quote'){
+      d.quoteApprovedByClient = true; toast('見積を承認しました'); renderClient(d.id);
+    } else if(action==='report-payment'){
+      d.paymentReportedByClient = true; toast('お支払い報告を送信しました'); renderClient(d.id);
+    } else if(action==='confirm-complete'){
+      d.clientConfirmed = true; advanceDeal(d); toast('確認ありがとうございます。発送準備を進めます'); renderClient(d.id);
+    } else if(action==='report-arrival'){
+      d.clientReportedArrival = true; toast('到着報告を送信しました'); renderClient(d.id);
+    } else if(action==='open-revision'){
+      var ta = document.getElementById('inq-text');
+      if(ta){
+        var tag = el.getAttribute('data-tag') || '';
+        if(!ta.value) ta.value = tag + '\n';
+        ta.focus();
+        ta.scrollIntoView({block:'center', behavior:'smooth'});
+      }
+    } else if(action==='send-inquiry'){
+      var t = document.getElementById('inq-text');
+      if(!t || !t.value.trim()){ toast('内容を入力してください'); return; }
+      toast('送信しました。制作者からの返信をお待ちください');
+      t.value = '';
+    }
+  });
+
+  /* ---------- feedback: right card on PC, bottom sheet on narrow screens ---------- */
+  var sheet = document.getElementById('survey');
+  var backdrop = document.getElementById('fb-backdrop');
+  var fbOpen = document.getElementById('fb-open');
+  function openSheet(){
+    sheet.classList.add('open'); backdrop.classList.add('open');
+    document.documentElement.classList.add('lock');
+    fbOpen.setAttribute('aria-expanded','true');
+    var first = sheet.querySelector('input, textarea, button');
+    if(first) setTimeout(function(){ first.focus({preventScroll:true}); }, 260);
+  }
+  function closeSheet(){
+    sheet.classList.remove('open'); backdrop.classList.remove('open');
+    document.documentElement.classList.remove('lock');
+    fbOpen.setAttribute('aria-expanded','false');
+  }
+  fbOpen.addEventListener('click', openSheet);
+  backdrop.addEventListener('click', closeSheet);
+  document.getElementById('sheet-x').addEventListener('click', closeSheet);
+  document.getElementById('survey-close').addEventListener('click', closeSheet);
+  document.getElementById('thanks-close').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSheet(); });
+
+  var surveyForm = document.getElementById('survey-form');
+  var surveyThanks = document.getElementById('survey-thanks');
+  var surveySubmitBtn = document.getElementById('survey-submit');
+  var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mzedggjg';
+  surveyForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!surveyForm.querySelector('input[name="q2"]:checked')){
+      toast('Q2は1つ以上選んでください');
+      var first = surveyForm.querySelector('input[name="q2"]'); if(first) first.focus();
+      return;
+    }
+    var fd = new FormData(surveyForm);
+    fd.append('_subject', 'WigFlowプロトタイプ フィードバック (JP)');
+    fd.append('locale', 'ja');
+    surveySubmitBtn.disabled = true;
+    surveySubmitBtn.textContent = '送信中…';
+    fetch(FORMSPREE_ENDPOINT, { method:'POST', body:fd, headers:{ 'Accept':'application/json' } })
+      .then(function(res){
+        if(res.ok){
+          surveyForm.hidden = true;
+          surveyThanks.hidden = false;
+        } else {
+          return res.json().then(function(data){
+            var msg = (data && data.errors && data.errors.length) ? data.errors.map(function(er){ return er.message; }).join(', ') : '送信できませんでした。もう一度お試しください。';
+            toast(msg);
+          });
+        }
+      })
+      .catch(function(){
+        toast('通信エラーが発生しました。もう一度お試しください。');
+      })
+      .then(function(){
+        surveySubmitBtn.disabled = false;
+        surveySubmitBtn.textContent = '送信する';
+      });
+  });
+
+  /* ---------- new deal form (in-memory only; cleared on reload) ---------- */
+  var newForm = document.getElementById('new-form');
+  var nfStatus = document.getElementById('nf-status');
+  var newSeq = 0;
+  nfStatus.innerHTML = STATUS_ORDER.map(function(s){
+    return '<option value="'+s+'">'+statusLabel[s]+'</option>';
+  }).join('');
+
+  var SPEC_KEYS = ['メーカー','色','長さ','前髪','分け目','生え際'];
+  var COST_KEYS = ['材料費','制作費','特殊加工費','送料'];
+  var PHOTO_COUNT = 3;
+  var photoOn = [false,false,false];
+  var nfSpecs = document.getElementById('nf-specs');
+  var nfCosts = document.getElementById('nf-costs');
+  var nfTotal = document.getElementById('nf-total');
+  var nfPhotos = document.getElementById('nf-photos');
+
+  nfSpecs.innerHTML = SPEC_KEYS.map(function(k,i){
+    return '<div class="nf-field"><label for="nf-spec-'+i+'">'+k+'</label><input id="nf-spec-'+i+'" type="text" maxlength="40"></div>';
+  }).join('');
+  nfCosts.innerHTML = COST_KEYS.map(function(k,i){
+    return '<div class="nf-field"><label for="nf-cost-'+i+'">'+k+'（円）</label><input id="nf-cost-'+i+'" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></div>';
+  }).join('');
+
+  function costValue(i){
+    var v = parseInt(document.getElementById('nf-cost-'+i).value, 10);
+    return (isNaN(v) || v<0) ? 0 : v;
+  }
+  function updateTotal(){
+    var sum = 0;
+    for(var i=0;i<COST_KEYS.length;i++) sum += costValue(i);
+    nfTotal.textContent = money(sum);
+  }
+  nfCosts.addEventListener('input', updateTotal);
+
+  function renderNfPhotos(){
+    var html = '';
+    for(var i=0;i<PHOTO_COUNT;i++){
+      html += photoOn[i]
+        ? '<button type="button" class="attach tile on" data-i="'+i+'" aria-pressed="true">'+ICON+'<b>✓ 添付済み</b><span>参考画像 '+(i+1)+'（ダミー）</span></button>'
+        : '<button type="button" class="attach tile" data-i="'+i+'" aria-pressed="false">'+ICON+'<b>＋ 画像を添付</b><span>（ダミー）</span></button>';
+    }
+    nfPhotos.innerHTML = html;
+  }
+  nfPhotos.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-i]');
+    if(!b) return;
+    var i = parseInt(b.getAttribute('data-i'),10);
+    photoOn[i] = !photoOn[i];
+    renderNfPhotos();
+  });
+
+  function resetNewForm(){
+    newForm.reset();
+    nfStatus.value = 'quote';
+    photoOn = [false,false,false];
+    renderNfPhotos();
+    updateTotal();
+  }
+  function pad2(n){ return (n<10 ? '0' : '') + n; }
+  function fmtDate(v){
+    var m = /^\d{4}-(\d{2})-(\d{2})$/.exec(v || '');
+    return m ? (m[1]+'/'+m[2]) : '';
+  }
+
+  document.getElementById('add-btn').addEventListener('click', function(){ selectTab('new'); });
+  document.getElementById('new-back').addEventListener('click', goBoard);
+  document.getElementById('new-cancel').addEventListener('click', goBoard);
+
+  newForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var character = document.getElementById('nf-character').value.trim();
+    var client = document.getElementById('nf-client').value.trim();
+    var wear = fmtDate(document.getElementById('nf-wear').value);
+    var delivery = fmtDate(document.getElementById('nf-delivery').value);
+    var target = nfStatus.value;
+    var specs = SPEC_KEYS.map(function(k,i){
+      var v = document.getElementById('nf-spec-'+i).value.trim();
+      return [k, v ? esc(v) : '未入力'];
+    });
+    var quote = [];
+    COST_KEYS.forEach(function(k,i){ var v = costValue(i); if(v>0) quote.push([k, v]); });
+    var refs = [];
+    photoOn.forEach(function(on,i){ if(on) refs.push('参考画像'+(i+1)); });
+    if(!character || !client || !wear){ toast('案件名・顧客名・着用予定日を入力してください'); return; }
+
+    var now = new Date();
+    var d = {
+      id:'new'+(++newSeq), client:client, character:character, status:'quote',
+      received: pad2(now.getMonth()+1)+'/'+pad2(now.getDate()),
+      wearDate:wear, deliveryDate:delivery || '未設定',
+      refs:refs, specs:specs, quote:quote, quoteApprovedByClient:false, archived:false
+    };
+    while(d.status!==target){ advanceDeal(d); }
+    deals.push(d);
+
+    goBoard();
+    toast('案件「'+character+'」をボードに追加しました');
+    var card = boardScroll.querySelector('.card[data-id="'+d.id+'"]');
+    if(card){
+      card.classList.add('just-added');
+      card.scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  });
+
+  renderBoard();
+  updateCaption('board');
+
+})();
+</script>
+
+</body>
+</html>
