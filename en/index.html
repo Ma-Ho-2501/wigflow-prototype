@@ -376,13 +376,13 @@ img{max-width:100%}
 <div class="page">
   <div class="proto-badges">
     <span>No account needed for feedback</span>
-    <span>No data is stored</span>
+    <span>Feedback is sent to the developer</span>
   </div>
 
   <div class="masthead">
     <h1>WigFlow Prototype</h1>
     <p class="lead">From reference images and wig specs to quotes, progress updates, final approval, and shipping.</p>
-    <p>A tool designed to help wig makers who take commissions manage each commission from start to finish — all in one place, instead of juggling spreadsheets, DMs, and custom forms.</p>
+    <p>A tool designed to help wig makers who take custom orders manage each commission from start to finish — all in one place, instead of juggling spreadsheets, DMs, and custom forms.</p>
     <p>Keep specs, pricing, and progress updates organized and share them with clients to reduce misunderstandings, missed approvals, and unnecessary back-and-forth.</p>
     <p>Explore both the maker's order dashboard and the client-facing status page. The prototype is interactive, so you can try the main workflows yourself.</p>
     <p><span class="hl">Spend 1–2 minutes exploring, then share your feedback in a quick 30-second survey.</span></p>
@@ -486,57 +486,57 @@ img{max-width:100%}
       <section class="survey" id="survey" aria-label="Feedback">
         <div class="survey-top">
           <div class="survey-head">
-            <h2>Could this work for managing your real commissions?</h2>
-            <p>Tell us what you thought after trying the prototype. (About 30 seconds)</p>
+            <h2>Could you see yourself using this to manage your wig commissions?</h2>
+            <p>Tell us what you think after trying the prototype. (About 30 seconds)</p>
           </div>
           <button class="sheet-x" type="button" id="sheet-x" aria-label="Close">✕</button>
         </div>
 
         <form id="survey-form">
           <fieldset class="field">
-            <legend>Q1. Would this tool be more convenient than how you manage orders now?</legend>
+            <legend>Q1. Would this make managing your commissions easier than your current process?</legend>
             <div class="radio-group">
-              <label><input type="radio" name="q1" value="Much more convenient" required> Much more convenient</label>
-              <label><input type="radio" name="q1" value="Somewhat more convenient" required> Somewhat more convenient</label>
+              <label><input type="radio" name="q1" value="Much easier" required> Much easier</label>
+              <label><input type="radio" name="q1" value="A little easier" required> A little easier</label>
               <label><input type="radio" name="q1" value="About the same" required> About the same</label>
-              <label><input type="radio" name="q1" value="Less convenient than now" required> Less convenient than now</label>
-              <label><input type="radio" name="q1" value="Can't tell yet" required> Can't tell yet</label>
+              <label><input type="radio" name="q1" value="More difficult" required> More difficult</label>
+              <label><input type="radio" name="q1" value="Not sure yet" required> Not sure yet</label>
             </div>
           </fieldset>
 
           <fieldset class="field" id="q2-group">
-            <legend>Q2. Which features seemed especially useful? (select all that apply)</legend>
+            <legend>Q2. Which features seem most useful to you? (select all that apply)</legend>
             <div class="radio-group">
-              <label><input type="checkbox" name="q2" value="Keeping all order info organized per commission"> Keeping all order info organized per commission</label>
+              <label><input type="checkbox" name="q2" value="Keeping all commission details in one place"> Keeping all commission details in one place</label>
               <label><input type="checkbox" name="q2" value="Organizing reference images and wig specs"> Organizing reference images and wig specs</label>
-              <label><input type="checkbox" name="q2" value="Managing quotes and pricing"> Managing quotes and pricing</label>
+              <label><input type="checkbox" name="q2" value="Preparing and tracking quotes"> Preparing and tracking quotes</label>
               <label><input type="checkbox" name="q2" value="Sharing progress updates with clients"> Sharing progress updates with clients</label>
               <label><input type="checkbox" name="q2" value="Final review and revision requests"> Final review and revision requests</label>
-              <label><input type="checkbox" name="q2" value="Tracking shipping status"> Tracking shipping status</label>
-              <label><input type="checkbox" name="q2" value="None in particular"> None in particular</label>
+              <label><input type="checkbox" name="q2" value="Tracking shipping"> Tracking shipping</label>
+              <label><input type="checkbox" name="q2" value="None of these"> None of these</label>
               <label><input type="checkbox" name="q2" value="Other"> Other</label>
             </div>
           </fieldset>
 
           <fieldset class="field">
-            <legend>Q3. Would you want to use a tool like this for real commissions?</legend>
+            <legend>Q3. Would you consider using a tool like this for your actual commissions?</legend>
             <div class="radio-group">
               <label><input type="radio" name="q3" value="Yes, definitely" required> Yes, definitely</label>
-              <label><input type="radio" name="q3" value="Yes, if the conditions are right" required> Yes, if the conditions are right</label>
-              <label><input type="radio" name="q3" value="Not sure" required> Not sure</label>
+              <label><input type="radio" name="q3" value="Yes, if it met my needs" required> Yes, if it met my needs</label>
+              <label><input type="radio" name="q3" value="Not sure yet" required> Not sure yet</label>
               <label><input type="radio" name="q3" value="Probably not" required> Probably not</label>
               <label><input type="radio" name="q3" value="No" required> No</label>
             </div>
           </fieldset>
 
           <div class="field">
-            <label for="q4" class="field-label">Q4. What's the most frustrating or stressful part of managing orders right now? (optional)</label>
-            <textarea id="q4" name="q4" placeholder="e.g. quotes and photos get buried in DMs, miscommunication about specs, replying to progress check-ins"></textarea>
+            <label for="q4" class="field-label">Q4. What's the most frustrating part of managing commissions right now? (optional)</label>
+            <textarea id="q4" name="q4" placeholder="For example: losing track of reference images in DMs, clarifying specs repeatedly, or chasing client approvals."></textarea>
           </div>
 
           <div class="field">
-            <label for="q5" class="field-label">Q5. If you used this for real, what's missing or what concerns you? (optional)</label>
-            <textarea id="q5" name="q5" placeholder="e.g. too many fields to fill in, hard to use on mobile, unsure if clients would actually open the page"></textarea>
+            <label for="q5" class="field-label">Q5. What would be missing, or what concerns would you have about using this? (optional)</label>
+            <textarea id="q5" name="q5"></textarea>
           </div>
 
           <div class="survey-actions">
